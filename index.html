@@ -597,6 +597,21 @@
                 touch-action: manipulation;
                 -webkit-overflow-scrolling: touch;
             }
+            
+            /* Make share button more visible on mobile */
+            .share-button {
+                width: 44px;
+                height: 44px;
+                bottom: 12px;
+                right: 12px;
+                background-color: rgba(255, 255, 255, 0.95);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            }
+            
+            .share-button svg {
+                width: 20px;
+                height: 20px;
+            }
         }
         
         /* Handle screen orientation changes */
@@ -841,15 +856,64 @@
                 height: 100px;
             }
         }
+        
+        /* Share button style */
+        .share-button {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 25;
+            background-color: rgba(255, 255, 255, 0.9);
+            border: 1px solid #bbb;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            transition: all 0.2s ease;
+        }
+        
+        .share-button:hover {
+            background-color: #fff;
+            transform: scale(1.1);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.4);
+        }
+        
+        .share-button:active {
+            transform: scale(0.95);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        @media (max-width: 768px) {
+            /* Mobile-specific styles */
+            /* ... existing code ... */
+            
+            /* Make share button more visible on mobile */
+            .share-button {
+                width: 44px;
+                height: 44px;
+                bottom: 12px;
+                right: 12px;
+                background-color: rgba(255, 255, 255, 0.95);
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+            }
+            
+            .share-button svg {
+                width: 20px;
+                height: 20px;
+            }
+        }
     </style>
 </head>
 <body>
     <canvas id="visualizer"></canvas>
     
-    <!-- Windows Media Player window -->
     <div class="window" id="wmp-window">
         <div class="title-bar">
-            <div class="title-bar-text">Windows Media Player</div>
+            <div class="title-bar-text">Media Player</div>
             <div class="title-bar-controls">
                 <button aria-label="Minimize"></button>
                 <button aria-label="Maximize"></button>
@@ -875,6 +939,17 @@
             <div class="modal-visualizer-container" style="position: relative; width: 100%; height: 150px; margin-top: 10px; border: 1px solid #999; border-radius: 5px; overflow: hidden;">
                 <canvas id="modal-visualizer" width="100%" height="100%" style="width: 100%; height: 100%; display: block;"></canvas>
                 <div class="visualization-status" style="display: none; opacity: 0; position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;"></div>
+                
+                <!-- Share button added to bottom of visualizer -->
+                <button id="share-button" class="share-button" style="position: absolute; bottom: 10px; right: 10px; z-index: 25; background-color: rgba(255, 255, 255, 0.9); border: 1px solid #bbb; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.2s ease;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #333;">
+                        <circle cx="18" cy="5" r="3"></circle>
+                        <circle cx="6" cy="12" r="3"></circle>
+                        <circle cx="18" cy="19" r="3"></circle>
+                        <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                        <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+                    </svg>
+                </button>
             </div>
             
             <div class="controls">
@@ -955,11 +1030,10 @@
                 <div class="windows-flag blue"></div>
                 <div class="windows-flag yellow"></div>
             </div>
-            <div class="loading-text">Starting Windows Media Player...</div>
             <div class="loading-bar-container">
                 <div class="loading-bar"></div>
             </div>
-            <div class="loading-description">Please wait while the player loads...</div>
+            <div class="loading-description">Ho sentito questa musica</div>
         </div>
     </div>
 
@@ -1017,7 +1091,7 @@
                 clearTimeout(loadingTimeout);
                 
                 // Update final loading state
-                document.querySelector('.loading-description').textContent = 'Ready!';
+                document.querySelector('.loading-description').textContent = 'Ti penso...';
                 
                 // Wait a moment to show the completed message
                 setTimeout(() => {
@@ -1041,6 +1115,104 @@
                     completeLoading();
                 }, 1000);
             });
+            
+            // Set up share functionality
+            const shareButton = document.getElementById('share-button');
+            
+            function handleShare() {
+                // Get the current URL
+                const url = window.location.href;
+                // Format the share text as specified
+                const shareText = `Ti penso - mentre ascolto: ${url}`;
+                
+                // Check if the Web Share API is supported (mainly on mobile)
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Windows XP Music Visualizer',
+                        text: shareText,
+                        url: url
+                    })
+                    .then(() => console.log('Shared successfully'))
+                    .catch((error) => console.log('Error sharing:', error));
+                } else {
+                    // Fallback for desktop - copy to clipboard
+                    try {
+                        navigator.clipboard.writeText(shareText)
+                            .then(() => {
+                                // Create temporary feedback element
+                                const feedback = document.createElement('div');
+                                feedback.textContent = 'Link copied to clipboard!';
+                                feedback.style.position = 'fixed';
+                                feedback.style.bottom = '80px';
+                                feedback.style.left = '50%';
+                                feedback.style.transform = 'translateX(-50%)';
+                                feedback.style.backgroundColor = 'rgba(0, 0, 0, 0.7)';
+                                feedback.style.color = 'white';
+                                feedback.style.padding = '10px 15px';
+                                feedback.style.borderRadius = '5px';
+                                feedback.style.zIndex = '10000';
+                                feedback.style.fontSize = '14px';
+                                
+                                document.body.appendChild(feedback);
+                                
+                                // Remove after 2 seconds
+                                setTimeout(() => {
+                                    feedback.style.opacity = '0';
+                                    feedback.style.transition = 'opacity 0.5s';
+                                    
+                                    setTimeout(() => {
+                                        document.body.removeChild(feedback);
+                                    }, 500);
+                                }, 2000);
+                            })
+                            .catch(err => {
+                                console.error('Failed to copy text: ', err);
+                                // Try alternative method for older browsers
+                                const textarea = document.createElement('textarea');
+                                textarea.value = shareText;
+                                textarea.style.position = 'fixed';
+                                textarea.style.opacity = '0';
+                                document.body.appendChild(textarea);
+                                textarea.focus();
+                                textarea.select();
+                                
+                                try {
+                                    document.execCommand('copy');
+                                    alert('Link copied to clipboard!');
+                                } catch (e) {
+                                    console.error('Failed to copy with execCommand:', e);
+                                    alert('Could not copy the link. Please copy this manually:\n\n' + shareText);
+                                }
+                                
+                                document.body.removeChild(textarea);
+                            });
+                    } catch (err) {
+                        console.error('Clipboard API not supported:', err);
+                        alert('Please copy this link manually:\n\n' + shareText);
+                    }
+                }
+            }
+            
+            // Add event listeners to share button
+            if (shareButton) {
+                // Use both click and touchend to ensure good mobile experience
+                shareButton.addEventListener('click', handleShare);
+                shareButton.addEventListener('touchend', (e) => {
+                    e.preventDefault(); // Prevent double triggering on mobile
+                    handleShare();
+                });
+                
+                // Add visual feedback on mobile touch
+                shareButton.addEventListener('touchstart', () => {
+                    shareButton.style.transform = 'scale(0.95)';
+                    shareButton.style.backgroundColor = 'rgba(255, 255, 255, 1)';
+                });
+                
+                shareButton.addEventListener('touchend', () => {
+                    shareButton.style.transform = '';
+                    shareButton.style.backgroundColor = '';
+                });
+            }
             
             // Check if iframe is already loaded (might happen with cached pages)
             if (spotifyIframe.complete || spotifyIframe.readyState === 4) {
@@ -1141,7 +1313,7 @@
                 
                 // Add program buttons for visible windows
                 if (!wmpWindow.classList.contains('minimized') && wmpWindow.style.display !== 'none') {
-                    const wmpBtn = createProgramButton('Windows Media Player', 'https://win98icons.alexmeub.com/icons/png/media_player-0.png', 'wmp-window');
+                    const wmpBtn = createProgramButton('Media Player', 'https://win98icons.alexmeub.com/icons/png/media_player-0.png', 'wmp-window');
                     activePrograms.appendChild(wmpBtn);
                 }
                 
