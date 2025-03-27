@@ -437,6 +437,7 @@
             .active-programs {
                 height: 38px;
                 margin-top: 2px;
+                display: none;
             }
             
             .taskbar-time {
@@ -611,6 +612,24 @@
             .share-button svg {
                 width: 20px;
                 height: 20px;
+            }
+            
+            /* Expanded view for mobile */
+            @media (max-width: 768px) {
+                .window.maximized .modal-visualizer-container {
+                    height: calc(100vh - 250px) !important;
+                    min-height: 300px !important;
+                    transition: height 0.3s ease;
+                }
+                
+                .window.maximized {
+                    width: 100vw !important;
+                    height: calc(100vh - 60px) !important;
+                    top: 0 !important;
+                    left: 0 !important;
+                    margin: 0 !important;
+                    transition: all 0.3s ease;
+                }
             }
         }
         
@@ -865,10 +884,11 @@
             z-index: 25;
             background-color: rgba(255, 255, 255, 0.9);
             border: 1px solid #bbb;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            display: flex;
+            border-radius: 8px;
+            width: auto;
+            height: auto;
+            padding: 8px 12px;
+            display: flex; /* Changed from none to flex to make it visible by default */
             align-items: center;
             justify-content: center;
             cursor: pointer;
@@ -878,7 +898,7 @@
         
         .share-button:hover {
             background-color: #fff;
-            transform: scale(1.1);
+            transform: scale(1.05);
             box-shadow: 0 3px 7px rgba(0,0,0,0.4);
         }
         
@@ -891,19 +911,26 @@
             /* Mobile-specific styles */
             /* ... existing code ... */
             
-            /* Make share button more visible on mobile */
+            /* Make share button visible on mobile and style it properly */
             .share-button {
-                width: 44px;
-                height: 44px;
                 bottom: 12px;
                 right: 12px;
+                display: flex; /* Show on mobile */
                 background-color: rgba(255, 255, 255, 0.95);
                 box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                border-radius: 8px;
+                width: auto;
+                padding: 8px 12px;
+            }
+            
+            .share-button span {
+                font-size: 14px;
+                font-weight: bold;
             }
             
             .share-button svg {
-                width: 20px;
-                height: 20px;
+                width: 16px;
+                height: 16px;
             }
         }
     </style>
@@ -941,8 +968,9 @@
                 <div class="visualization-status" style="display: none; opacity: 0; position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;"></div>
                 
                 <!-- Share button added to bottom of visualizer -->
-                <button id="share-button" class="share-button" style="position: absolute; bottom: 10px; right: 10px; z-index: 25; background-color: rgba(255, 255, 255, 0.9); border: 1px solid #bbb; border-radius: 50%; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.2s ease;">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #333;">
+                <button id="share-button" class="share-button" style="position: absolute; bottom: 10px; right: 10px; z-index: 25; background-color: rgba(255, 255, 255, 0.9); border: 1px solid #bbb; border-radius: 8px; width: auto; height: auto; padding: 8px 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.2s ease;">
+                    <span style="margin-right: 8px; font-size: 13px; font-weight: bold; color: #333;">invialo a chi stai pensando</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #333;">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
@@ -973,33 +1001,29 @@
         <div class="window-body">
             
             <div class="ie-address-bar">
-                <span>Address:</span> https://links.winxp-media-player.com/
+                <span>Address:</span> https://venerus.eu/
             </div>
             <div class="ie-links">
-                <a href="https://open.spotify.com/" target="_blank" class="ie-link">
+                <a href="https://open.spotify.com/intl-it/artist/49faW2w8eguUIAG5c85KcD" target="_blank" class="ie-link">
                     <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Spotify">
-                    <span>Spotify - Music for Everyone</span>
+                    <span>Venerus - Spotify Artist Page</span>
                 </a>
-                <a href="https://www.instagram.com/" target="_blank" class="ie-link">
+                <a href="https://www.instagram.com/venerus/?hl=it" target="_blank" class="ie-link">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png" alt="Instagram">
-                    <span>Instagram</span>
+                    <span>Venerus - Instagram</span>
                 </a>
-                <a href="https://web.telegram.org/" target="_blank" class="ie-link">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png" alt="Telegram">
-                    <span>Telegram Web</span>
-                </a>
-                <a href="https://store.steampowered.com/" target="_blank" class="ie-link">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/512px-Steam_icon_logo.svg.png" alt="Steam Store">
-                    <span>Steam Store - Games and Apps</span>
+                <a href="https://venerus.eu/" target="_blank" class="ie-link">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Globe_icon.svg/1024px-Globe_icon.svg.png" alt="Website">
+                    <span>Venerus - Official Website</span>
                 </a>
             </div>
         </div>
     </div>
     
     <div class="taskbar">
-        <button class="start-button">
-            <img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" alt="Start">
-            start
+        <button class="start-button" id="taskbar-share-button">
+            <img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" alt="Share">
+            Share
         </button>
         <div class="quick-launch">
             <button class="quick-launch-icon" id="wmp-icon" title="Windows Media Player">
@@ -1118,6 +1142,7 @@
             
             // Set up share functionality
             const shareButton = document.getElementById('share-button');
+            const taskbarShareButton = document.getElementById('taskbar-share-button');
             
             function handleShare() {
                 // Get the current URL
@@ -1211,6 +1236,25 @@
                 shareButton.addEventListener('touchend', () => {
                     shareButton.style.transform = '';
                     shareButton.style.backgroundColor = '';
+                });
+            }
+            
+            // Connect the taskbar share button to the same functionality
+            if (taskbarShareButton) {
+                // Use both click and touchend to ensure good mobile experience
+                taskbarShareButton.addEventListener('click', handleShare);
+                taskbarShareButton.addEventListener('touchend', (e) => {
+                    e.preventDefault(); // Prevent double triggering on mobile
+                    handleShare();
+                });
+                
+                // Add visual feedback on mobile touch
+                taskbarShareButton.addEventListener('touchstart', () => {
+                    taskbarShareButton.classList.add('active');
+                });
+                
+                taskbarShareButton.addEventListener('touchend', () => {
+                    taskbarShareButton.classList.remove('active');
                 });
             }
             
@@ -1567,34 +1611,54 @@
                     e.stopPropagation();
                     
                     const wmpWindow = document.getElementById('wmp-window');
+                    const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                    const isMobile = window.innerWidth <= 768;
                     
                     if (wmpWindow) {
                         if (wmpWindow.classList.contains('compact-mode')) {
-                            // Restore to normal size
+                            // Restore to expanded size
                             wmpWindow.classList.remove('compact-mode');
                             this.textContent = 'Compact';
                             
-                            // Show the window container elements again
-                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                            // Show the visualizer container
                             if (modalVisualizerContainer) {
                                 modalVisualizerContainer.style.display = 'block';
+                            }
+                            
+                            // For mobile, make it fill the screen and visualizer take more space
+                            if (isMobile) {
+                                wmpWindow.classList.add('maximized');
+                                wmpWindow.style.width = '100vw';
+                                wmpWindow.style.height = `calc(100vh - 60px)`;
+                                wmpWindow.style.top = '0';
+                                wmpWindow.style.left = '0';
+                                wmpWindow.style.margin = '0';
+                                
+                                // Make visualizer larger
+                                if (modalVisualizerContainer) {
+                                    modalVisualizerContainer.style.height = 'calc(100vh - 250px)';
+                                    modalVisualizerContainer.style.minHeight = '300px';
+                                }
+                            } else {
+                                // For desktop, restore to standard size
+                                wmpWindow.style.width = '';
+                                wmpWindow.style.height = '';
                             }
                         } else {
                             // Shrink to compact mode
                             wmpWindow.classList.add('compact-mode');
+                            wmpWindow.classList.remove('maximized');
                             this.textContent = 'Expand';
                             
                             // Hide the modal visualizer to make window smaller
-                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
                             if (modalVisualizerContainer) {
                                 modalVisualizerContainer.style.display = 'none';
+                                modalVisualizerContainer.style.height = '150px';
+                                modalVisualizerContainer.style.minHeight = '150px';
                             }
                             
-                            // Ensure window is not maximized
-                            wmpWindow.classList.remove('maximized');
-                            
                             // Adjust size based on device
-                            if (window.innerWidth <= 768) {
+                            if (isMobile) {
                                 // Mobile size
                                 wmpWindow.style.width = '95%';
                             } else {
@@ -1618,6 +1682,9 @@
                         setTimeout(() => {
                             this.style.backgroundColor = originalBackground;
                         }, 300);
+                        
+                        // Trigger resize event to make sure visualizer renders correctly
+                        window.dispatchEvent(new Event('resize'));
                     }
                     
                     return false;
