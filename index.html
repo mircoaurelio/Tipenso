@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>WinXP Music Visualizer</title>
+    <link rel="stylesheet" href="https://unpkg.com/xp.css">
+    <!-- Spotify iframe API -->
+    <script src="https://open.spotify.com/embed-podcast/iframe-api/v1" id="spotify-iframe-api"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #000;
+            font-family: "Pixelated MS Sans Serif", Arial;
+            touch-action: manipulation; /* Improves touch performance */
+        }
+        #visualizer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        .window {
+            position: absolute;
+            z-index: 10; /* Increased z-index */
+            margin: 20px;
+            resize: both;
+            overflow: hidden;
+            min-width: 300px;
+            background: rgba(236, 233, 216, 0.95);
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Compact mode for the window - shows more background */
+        .window.compact-mode {
+            background: rgba(236, 233, 216, 0.85);
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Modal visualizer styles */
+        .modal-visualizer-container {
+            position: relative;
+            width: 100%;
+            height: 150px;
+            margin-top: 10px;
+            border: 1px solid #999;
+            border-radius: 5px;
+            overflow: hidden;
+            background-color: #000;
+            transition: height 0.3s ease;
+        }
+        
+        #modal-visualizer {
+            width: 100%;
+            height: 100%;
+            display: block;
+            background-color: #000;
+        }
+        
+        .visualization-status {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            padding: 5px;
+            background: rgba(0,0,0,0.5);
+            color: white;
+            border-radius: 3px;
+            font-size: 12px;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        /* Hide visualizer on compact mode */
+        .compact-mode .modal-visualizer-container {
+            display: none;
+        }
+        
+        /* Improved styles for Spotify iframe visibility */
+        .player-container {
+            position: relative;
+            z-index: 15; /* Higher than window */
+            min-height: 152px;
+            margin-bottom: 10px;
+            display: block !important;
+            visibility: visible !important;
+            width: 100%;
+            overflow: visible;
+            background-color: rgb(70 86 78);
+        }
+        
+        #spotify-player,
+        #spotify-embed-iframe,
+        #spotify-embed-iframe iframe {
+            display: block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            z-index: 20; /* Even higher */
+            position: relative;
+            border-radius: 12px;
+            min-height: 152px;
+            width: 100%;
+            background-color: white;
+            border: none;
+        }
+        
+        /* Force iframe content to be visible */
+        iframe {
+            background-color: white;
+        }
+        
+        .window.maximized {
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+        .window.minimized {
+            display: none !important;
+        }
+        .title-bar {
+            background: linear-gradient(180deg, #0058ee 0%, #3a93ff 10%, #288eff 50%, #0058ee 100%);
+            padding: 3px 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            user-select: none; /* Prevent text selection during drag */
+            touch-action: none; /* Prevent touch scrolling for this element */
+        }
+        .title-bar-text {
+            color: white;
+            font-weight: bold;
+        }
+        .window-body {
+            padding: 10px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            width: 100%; /* Ensure full width */
+            height: 40px;
+            background: linear-gradient(to bottom, #1f2f86 0%, #2b44a6 3%, #3b5bdb 6%, #3a59d7 10%, #4b6af5 12%, #4b6af5 21%, #4b6af5 24%, #4b6af5 27%, #4464ee 30%, #4464ee 34%, #4464ee 36%, #425de7 40%, #425de7 44%, #425de7 51%, #425de7 52%, #4b6af5 54%, #4b6af5 57%, #4b6af5 61%, #4b6af5 64%, #4b6af5 67%, #4b6af5 100%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            padding: 0 2px;
+            border-top: 1px solid #6787e3;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box; /* Include padding in width calculation */
+            overflow: hidden; /* Prevent overflow */
+        }
+        .start-button {
+            height: 36px;
+            padding: 1px 8px;
+            margin: 0 4px;
+            display: flex;
+            align-items: center;
+            background: linear-gradient(to bottom, #3ba13b 0%, #3ba13b 12%, #40ab40 25%, #40ab40 37%, #45b645 50%, #45b645 62%, #51c751 75%, #51c751 87%, #47b847 100%);
+            border: 1px solid #249524;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
+            min-width: 80px; /* Reduced from 90px */
+            justify-content: center;
+        }
+        .start-button:hover {
+            background: linear-gradient(to bottom, #4cc24c 0%, #4cc24c 12%, #52d152 25%, #52d152 37%, #59db59 50%, #59db59 62%, #66e666 75%, #66e666 87%, #59db59 100%);
+        }
+        .start-button:active, .start-button.active {
+            background: linear-gradient(to bottom, #33a033 0%, #33a033 12%, #37aa37 25%, #37aa37 37%, #3cb53c 50%, #3cb53c 62%, #45c045 75%, #45c045 87%, #3cb53c 100%);
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.3);
+        }
+        .start-button img {
+            height: 24px; /* Slightly reduced */
+            margin-right: 4px; /* Reduced from 6px */
+            margin-left: 2px;
+            object-fit: contain; /* Prevents stretching */
+            max-width: 100%; /* Ensures image stays within container */
+        }
+        .active-programs {
+            display: flex;
+            margin-left: 5px;
+            gap: 3px;
+            height: 32px;
+            margin-top: 2px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+            flex: 1;
+            padding-bottom: 4px;
+        }
+        .program-button {
+            padding: 1px 8px; /* Reduced from 10px */
+            background: linear-gradient(to bottom, #4b6af5 0%, #3955c9 100%);
+            border: 1px solid #1f2f86;
+            border-radius: 3px;
+            color: white;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 4px; /* Reduced from 5px */
+            height: 28px;
+            min-width: 110px; /* Reduced from 120px */
+            flex-shrink: 0;
+        }
+        .program-button:hover {
+            background: linear-gradient(to bottom, #5c7bff 0%, #4a66da 100%);
+        }
+        .program-button.active {
+            background: linear-gradient(to bottom, #4060e0 0%, #304db3 100%);
+            box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .program-button img {
+            height: 18px;
+            width: 18px;
+            object-fit: contain;
+        }
+        .taskbar-time {
+            position: relative;
+            margin-left: auto;
+            color: white;
+            font-size: 12px; /* Slightly reduced */
+            padding: 4px 8px; /* Reduced horizontal padding */
+            background: linear-gradient(to bottom, #4b6af5 0%, #3955c9 100%);
+            border: 1px solid #1f2f86;
+            border-radius: 3px;
+            height: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin-right: 5px;
+            font-weight: bold;
+            min-width: 55px; /* Set minimum width */
+        }
+        .time-display {
+            line-height: 1.1;
+        }
+        .date-display {
+            font-size: 9px; /* Smaller date text */
+            font-weight: normal;
+            line-height: 1;
+        }
+        .quick-launch {
+            display: flex;
+            align-items: center;
+            gap: 3px; /* Reduced from 4px */
+            margin-left: 4px; /* Reduced from 5px */
+            padding-left: 4px; /* Reduced from 5px */
+            border-left: 1px solid #6787e3;
+            height: 32px;
+        }
+        .quick-launch-icon {
+            width: 26px; /* Reduced from 28px */
+            height: 26px; /* Reduced from 28px */
+            padding: 3px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .quick-launch-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        .quick-launch-icon img {
+            width: 18px; /* Reduced from 20px */
+            height: 18px; /* Reduced from 20px */
+            object-fit: contain;
+            max-width: 100%;
+            max-height: 100%;
+        }
+        
+        /* Link styles for IE window */
+        .ie-links {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding: 5px 0;
+        }
+        .ie-link {
+            display: flex;
+            align-items: center;
+            padding: 5px;
+            text-decoration: none;
+            color: #0000EE;
+            gap: 8px;
+            border-radius: 2px;
+        }
+        .ie-link:hover {
+            background-color: #E8E8F8;
+        }
+        .ie-link img {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        .ie-address-bar {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+            border: 1px solid #919B9C;
+            background: white;
+            padding: 3px 5px;
+            font-size: 12px;
+        }
+        .ie-address-bar span {
+            margin-right: 5px;
+            font-weight: bold;
+        }
+        .window.ie-window {
+            width: 400px;
+            height: 350px;
+        }
+        .window-toolbar {
+            border-bottom: 1px solid #919B9C;
+            padding: 3px;
+            display: flex;
+            gap: 5px;
+            background: #ECE9D8;
+        }
+        .toolbar-button {
+            min-height: 22px;
+            padding: 2px 5px;
+            margin: 0;
+            font-size: 11px;
+        }
+        
+        /* Windows XP-style notification */
+        .xp-notification {
+            position: fixed;
+            bottom: 60px;
+            right: 20px;
+            background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
+            border: 1px solid #7BA7E1;
+            border-radius: 3px;
+            padding: 12px 20px;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.2);
+            color: #000;
+            font-size: 14px;
+            z-index: 2000;
+            max-width: 90%;
+            animation: slideIn 0.3s forwards;
+            font-family: "Tahoma", sans-serif;
+        }
+        .xp-notification.fadeOut {
+            animation: fadeOut 0.5s forwards;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        
+        /* Better button styles for mobile */
+        button {
+            min-height: 28px;
+            touch-action: manipulation;
+        }
+        
+        @media (max-width: 768px) {
+            .taskbar {
+                height: 50px; /* Slightly reduced height */
+                padding: 0 2px;
+                width: 100%; /* Ensure full width */
+                left: 0;
+                right: 0;
+            }
+            
+            .start-button {
+                height: 40px; /* Smaller height */
+                min-width: 70px; /* Smaller width */
+                padding: 1px 5px;
+                font-size: 14px;
+                margin: 0 3px 0 1px;
+            }
+            
+            .start-button img {
+                height: 20px; /* Smaller icon */
+                width: 20px;
+                margin-right: 4px;
+                object-position: center;
+            }
+            
+            .quick-launch {
+                gap: 3px;
+                height: 40px;
+                margin-left: 3px;
+                padding-left: 3px;
+            }
+            
+            .quick-launch-icon {
+                width: 30px; /* Smaller */
+                height: 30px;
+                padding: 3px;
+            }
+            
+            .quick-launch-icon img {
+                width: 16px; /* Smaller icon */
+                height: 16px;
+            }
+            
+            .program-button {
+                height: 36px;
+                min-width: 100px; /* Reduced width */
+                font-size: 11px; /* Smaller text */
+                padding: 1px 6px;
+            }
+            
+            .program-button img {
+                height: 16px; /* Smaller icon */
+                width: 16px;
+                margin-right: 3px;
+            }
+            
+            .active-programs {
+                height: 38px;
+                margin-top: 2px;
+            }
+            
+            .taskbar-time {
+                height: 32px;
+                font-size: 13px;
+                padding: 2px 6px;
+                margin-right: 4px;
+                min-width: 50px;
+            }
+            
+            .date-display {
+                font-size: 8px;
+            }
+            
+            /* Larger tap targets for mobile */
+            button {
+                padding: 10px 15px;
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            /* Fix window sizing on mobile */
+            .window {
+                width: 85vw;
+                max-width: 500px;
+                margin: 10px auto;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            }
+            
+            /* Larger title bar for easier dragging on mobile */
+            .title-bar {
+                padding: 8px 10px;
+                height: 24px;
+            }
+            
+            /* Make the window title text larger on mobile */
+            .title-bar-text {
+                font-size: 16px;
+            }
+            
+            /* Make the window control buttons larger for mobile */
+            .title-bar-controls button {
+                min-width: 30px;
+                min-height: 30px;
+                margin-left: 4px;
+            }
+            
+            /* Make the XP notification bigger on mobile */
+            .xp-notification {
+                padding: 15px 20px;
+                font-size: 16px;
+                bottom: 70px;
+            }
+            
+            /* Adjust IE window for mobile */
+            .window.ie-window {
+                width: 85vw;
+                height: 70vh;
+            }
+            
+            .ie-link {
+                padding: 8px 5px;
+            }
+            
+            /* Hide toggle and kaleidoscope buttons on mobile */
+            .btn-toggle-play, 
+            .btn-kaleidoscope, 
+            .btn-debug {
+                display: none !important;
+            }
+            
+            /* Simplified controls for mobile */
+            .controls {
+                margin-top: 10px;
+                display: flex;
+                justify-content: space-around;
+                align-items: center;
+                width: 100%;
+            }
+            
+            .controls button {
+                margin: 0 5px;
+                height: 40px;  /* Bigger touch target */
+                min-width: 80px;
+                font-size: 14px;
+                padding: 8px 12px;
+                border: 2px solid rgba(255,255,255,0.2);
+                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                border-radius: 6px;
+                z-index: 100;  /* Ensure buttons are above other elements */
+                position: relative;
+                touch-action: manipulation;  /* Improve touch handling */
+                -webkit-tap-highlight-color: rgba(0,0,0,0);  /* Remove default mobile tap highlight */
+            }
+            
+            /* Visual feedback for active state */
+            .controls button:active {
+                background-color: rgba(255,255,255,0.3) !important;
+                transform: scale(0.97);
+            }
+            
+            #spotify-click-detector {
+                pointer-events: none; /* Ensure this doesn't block clicks */
+            }
+            
+            .player-container {
+                background-color: rgb(70, 86, 78);
+                min-height: 152px;
+            }
+            
+            #spotify-player {
+                display: block;
+                visibility: visible;
+                position: relative;
+                z-index: 20;
+                overflow: visible;
+                background-color: white;
+                min-height: 152px;
+            }
+            
+            #spotify-embed-iframe, 
+            #spotify-embed-iframe iframe {
+                display: block;
+                visibility: visible;
+                position: relative;
+                z-index: 20;
+                background-color: white;
+                min-height: 152px;
+            }
+            
+            /* Debugging - Mark buttons to see if they're visibly rendered correctly */
+            .controls:after {
+                content: "";
+                display: block;
+                clear: both;
+            }
+            
+            /* Modal visualizer container for mobile */
+            .modal-visualizer-container {
+                height: 180px;
+                min-height: 180px;
+                z-index: 5;
+            }
+            
+            /* Ensure WMP window has proper z-index */
+            #wmp-window {
+                z-index: 1000;
+                position: relative;
+            }
+            
+            /* Fix for any potential issues with bubbling */
+            html, body {
+                touch-action: manipulation;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        
+        /* Handle screen orientation changes */
+        @media (orientation: landscape) and (max-height: 500px) {
+            .taskbar {
+                height: 38px; /* Even smaller in landscape */
+                padding: 0 2px;
+            }
+            
+            .window {
+                max-height: calc(100vh - 50px);
+            }
+            
+            /* Adjust icons for landscape */
+            .start-button {
+                height: 32px;
+                min-width: 65px;
+                font-size: 12px;
+            }
+            
+            .start-button img {
+                height: 18px;
+                width: 18px;
+            }
+            
+            .quick-launch-icon {
+                width: 24px;
+                height: 24px;
+            }
+            
+            .quick-launch-icon img {
+                width: 14px;
+                height: 14px;
+            }
+            
+            .quick-launch {
+                height: 30px;
+            }
+            
+            .active-programs {
+                height: 30px;
+            }
+            
+            .program-button {
+                height: 28px;
+                min-width: 90px;
+                font-size: 10px;
+            }
+            
+            .taskbar-time {
+                height: 26px;
+                padding: 1px 5px;
+            }
+        }
+
+        /* Base styles */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #e0e0e0;
+            overflow-x: hidden;
+        }
+
+        /* Make sure buttons are always clickable */
+        button {
+            cursor: pointer;
+            position: relative;
+            z-index: 50;
+        }
+        
+        /* Ensure the spotify-click-detector doesn't block button interaction */
+        #spotify-click-detector {
+            z-index: 1;
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        /* Existing styles continue below */
+        .player-container {
+            background-color: rgb(70, 86, 78);
+            min-height: 152px;
+            position: relative;
+            z-index: 10;
+            margin-bottom: 20px;
+        }
+        
+        /* Ensure the controls always have a higher z-index than other elements */
+        .controls {
+            position: relative;
+            z-index: 100;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="visualizer"></canvas>
+    
+    <!-- Windows Media Player window -->
+    <div class="window" id="wmp-window">
+        <div class="title-bar">
+            <div class="title-bar-text">Windows Media Player</div>
+            <div class="title-bar-controls">
+                <button aria-label="Minimize"></button>
+                <button aria-label="Maximize"></button>
+                <button aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="player-container" style="position: relative; z-index: 15; min-height: 152px; background-color: rgb(70 86 78);">
+                <!-- Updated Spotify iframe with more reliable configuration -->
+                <iframe id="spotify-player"
+                    style="border-radius:12px; display: block !important; position: relative; z-index: 20; width: 100%; height: 152px; visibility: visible; opacity: 1; background-color: white;"
+                    src="https://open.spotify.com/embed/track/3oBVv54hTMSYXXJGxO5JxJ?utm_source=generator&theme=0"
+                    frameBorder="0"
+                    allowfullscreen=""
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="eager">
+                </iframe>
+                <!-- Add an invisible overlay to detect clicks on the iframe which might be play/pause actions -->
+                <div id="spotify-click-detector" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 21; cursor: pointer; opacity: 0; pointer-events: none;"></div>
+            </div>
+            
+            <!-- Add secondary canvas visualization inside the window -->
+            <div class="modal-visualizer-container" style="position: relative; width: 100%; height: 150px; margin-top: 10px; border: 1px solid #999; border-radius: 5px; overflow: hidden;">
+                <canvas id="modal-visualizer" width="100%" height="100%" style="width: 100%; height: 100%; display: block;"></canvas>
+                <div class="visualization-status" style="position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;">Ready</div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn-play-pause">Play/Pause</button>
+                <button class="btn-visualization">Visual: Low</button>
+                <button class="btn-fullscreen">Fullscreen</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Internet Explorer window -->
+    <div class="window ie-window minimized" id="ie-window">
+        <div class="title-bar">
+            <div class="title-bar-text">Internet Explorer</div>
+            <div class="title-bar-controls">
+                <button aria-label="Minimize"></button>
+                <button aria-label="Maximize"></button>
+                <button aria-label="Close"></button>
+            </div>
+        </div>
+        <div class="window-body">
+            <div class="window-toolbar">
+                <button class="toolbar-button">Back</button>
+                <button class="toolbar-button">Forward</button>
+                <button class="toolbar-button">Stop</button>
+                <button class="toolbar-button">Refresh</button>
+                <button class="toolbar-button">Home</button>
+            </div>
+            <div class="ie-address-bar">
+                <span>Address:</span> https://links.winxp-media-player.com/
+            </div>
+            <div class="ie-links">
+                <a href="https://open.spotify.com/" target="_blank" class="ie-link">
+                    <img src="https://storage.googleapis.com/pr-newsroom-wp/1/2018/11/Spotify_Logo_RGB_Green.png" alt="Spotify">
+                    <span>Spotify - Music for Everyone</span>
+                </a>
+                <a href="https://www.instagram.com/" target="_blank" class="ie-link">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Instagram_icon.png/600px-Instagram_icon.png" alt="Instagram">
+                    <span>Instagram</span>
+                </a>
+                <a href="https://web.telegram.org/" target="_blank" class="ie-link">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Telegram_logo.svg/512px-Telegram_logo.svg.png" alt="Telegram">
+                    <span>Telegram Web</span>
+                </a>
+                <a href="https://store.steampowered.com/" target="_blank" class="ie-link">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/512px-Steam_icon_logo.svg.png" alt="Steam Store">
+                    <span>Steam Store - Games and Apps</span>
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="taskbar">
+        <button class="start-button">
+            <img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" alt="Start">
+            start
+        </button>
+        <div class="quick-launch">
+            <button class="quick-launch-icon" id="wmp-icon" title="Windows Media Player">
+                <img src="https://win98icons.alexmeub.com/icons/png/media_player-0.png" alt="WMP">
+            </button>
+            <button class="quick-launch-icon" id="ie-icon" title="Internet Explorer">
+                <img src="https://win98icons.alexmeub.com/icons/png/msie1-0.png" alt="IE">
+            </button>
+            <button class="quick-launch-icon" id="show-desktop" title="Show Desktop">
+                <img src="https://win98icons.alexmeub.com/icons/png/desktop-3.png" alt="Show Desktop">
+            </button>
+        </div>
+        <div class="active-programs" id="active-programs">
+            <!-- Program buttons will be added dynamically when windows are opened -->
+        </div>
+        <div class="taskbar-time" id="taskbar-time">
+            <div class="time-display"></div>
+            <div class="date-display"></div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="visualizer.js"></script>
+    <script>
+        // Add window control functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up windows
+            const wmpWindow = document.getElementById('wmp-window');
+            const ieWindow = document.getElementById('ie-window');
+            const windowElements = [wmpWindow, ieWindow];
+            
+            const activePrograms = document.getElementById('active-programs');
+            
+            // Set default visualization pattern (since we removed the button)
+            if (window.visualizerInstance) {
+                // Set kaleidoscope pattern 2 by default (the bars pattern)
+                setTimeout(() => {
+                    if (window.visualizerInstance.updateKaleidoscopePattern) {
+                        window.visualizerInstance.updateKaleidoscopePattern(2);
+                        console.log('Set default kaleidoscope pattern');
+                    }
+                }, 1000);
+            }
+            
+            // Create program button for taskbar
+            function createProgramButton(title, iconSrc, windowId) {
+                const programBtn = document.createElement('div');
+                programBtn.className = 'program-button';
+                programBtn.dataset.window = windowId;
+                programBtn.innerHTML = `
+                    <img src="${iconSrc}" alt="${title}">
+                    ${title}
+                `;
+                
+                // Click to restore window
+                programBtn.addEventListener('click', function() {
+                    const win = document.getElementById(windowId);
+                    if (win.classList.contains('minimized')) {
+                        win.classList.remove('minimized');
+                        windowElements.forEach(w => {
+                            if (w.id !== windowId && !w.classList.contains('minimized')) {
+                                w.style.zIndex = 1;
+                            }
+                        });
+                        win.style.zIndex = 2; // Bring to front
+                        updateTaskbarButtons();
+                    }
+                });
+                
+                return programBtn;
+            }
+            
+            // Update taskbar buttons based on window states
+            function updateTaskbarButtons() {
+                // Clear existing program buttons
+                activePrograms.innerHTML = '';
+                
+                // Add program buttons for visible windows
+                if (!wmpWindow.classList.contains('minimized') && wmpWindow.style.display !== 'none') {
+                    const wmpBtn = createProgramButton('Windows Media Player', 'https://win98icons.alexmeub.com/icons/png/media_player-0.png', 'wmp-window');
+                    activePrograms.appendChild(wmpBtn);
+                }
+                
+                if (!ieWindow.classList.contains('minimized') && ieWindow.style.display !== 'none') {
+                    const ieBtn = createProgramButton('Internet Explorer', 'https://win98icons.alexmeub.com/icons/png/msie1-0.png', 'ie-window');
+                    activePrograms.appendChild(ieBtn);
+                }
+            }
+            
+            // Set up window controls for all windows
+            windowElements.forEach(windowElement => {
+                const minimizeBtn = windowElement.querySelector('button[aria-label="Minimize"]');
+                const maximizeBtn = windowElement.querySelector('button[aria-label="Maximize"]');
+                const closeBtn = windowElement.querySelector('button[aria-label="Close"]');
+                
+                // Minimize button functionality
+                minimizeBtn.addEventListener('click', function() {
+                    windowElement.classList.add('minimized');
+                    updateTaskbarButtons();
+                });
+                
+                // Maximize button functionality
+                maximizeBtn.addEventListener('click', function() {
+                    if (windowElement.classList.contains('maximized')) {
+                        windowElement.classList.remove('maximized');
+                        windowElement.style.width = '';
+                        windowElement.style.height = '';
+                        windowElement.style.top = '';
+                        windowElement.style.left = '';
+                    } else {
+                        windowElement.classList.add('maximized');
+                        windowElement.style.width = '100vw';
+                        windowElement.style.height = `calc(100vh - ${window.innerWidth <= 768 ? '70' : '60'}px)`;
+                        windowElement.style.top = '0';
+                        windowElement.style.left = '0';
+                        windowElement.style.transform = 'none';
+                        windowElement.style.margin = '0';
+                    }
+                });
+                
+                // Close button functionality
+                closeBtn.addEventListener('click', function() {
+                    windowElement.classList.add('minimized');
+                    updateTaskbarButtons();
+                });
+                
+                // Bring window to front when clicked
+                windowElement.addEventListener('mousedown', function() {
+                    windowElements.forEach(w => {
+                        if (w !== windowElement) {
+                            w.style.zIndex = 1;
+                        }
+                    });
+                    windowElement.style.zIndex = 2;
+                    updateTaskbarButtons();
+                });
+            });
+            
+            // WMP icon click to toggle window
+            const wmpIcon = document.getElementById('wmp-icon');
+            wmpIcon.addEventListener('click', function() {
+                if (wmpWindow.classList.contains('minimized')) {
+                    wmpWindow.classList.remove('minimized');
+                    windowElements.forEach(w => {
+                        if (w !== wmpWindow) w.style.zIndex = 1;
+                    });
+                    wmpWindow.style.zIndex = 2;
+                } else if (wmpWindow.style.display !== 'none') {
+                    wmpWindow.classList.add('minimized');
+                } else {
+                    wmpWindow.style.display = 'block';
+                    windowElements.forEach(w => {
+                        if (w !== wmpWindow) w.style.zIndex = 1;
+                    });
+                    wmpWindow.style.zIndex = 2;
+                }
+                updateTaskbarButtons();
+            });
+            
+            // IE icon click to toggle window
+            const ieIcon = document.getElementById('ie-icon');
+            ieIcon.addEventListener('click', function() {
+                if (ieWindow.classList.contains('minimized')) {
+                    ieWindow.classList.remove('minimized');
+                    windowElements.forEach(w => {
+                        if (w !== ieWindow) w.style.zIndex = 1;
+                    });
+                    ieWindow.style.zIndex = 2;
+                } else if (ieWindow.style.display !== 'none') {
+                    ieWindow.classList.add('minimized');
+                } else {
+                    ieWindow.style.display = 'block';
+                    windowElements.forEach(w => {
+                        if (w !== ieWindow) w.style.zIndex = 1;
+                    });
+                    ieWindow.style.zIndex = 2;
+                }
+                updateTaskbarButtons();
+            });
+            
+            // Initialize taskbar
+            updateTaskbarButtons();
+            
+            // Show Desktop functionality
+            const showDesktopBtn = document.getElementById('show-desktop');
+            showDesktopBtn.addEventListener('click', function() {
+                if (windowElements.some(w => !w.classList.contains('minimized') && w.style.display !== 'none')) {
+                    // If any window is visible, minimize all
+                    windowElements.forEach(w => {
+                        if (!w.classList.contains('minimized') && w.style.display !== 'none') {
+                            w.classList.add('minimized');
+                        }
+                    });
+                } else {
+                    // If all are minimized, restore all
+                    windowElements.forEach(w => {
+                        w.classList.remove('minimized');
+                    });
+                    wmpWindow.style.zIndex = 2; // Bring WMP to front
+                    ieWindow.style.zIndex = 1;
+                }
+                updateTaskbarButtons();
+            });
+            
+            // Set up clock with date and time
+            function updateClock() {
+                const now = new Date();
+                
+                // First verify elements exist before setting content
+                const timeDisplay = document.querySelector('.time-display');
+                const dateDisplay = document.querySelector('.date-display');
+                
+                // Make sure elements exist
+                if (!timeDisplay || !dateDisplay) {
+                    // If elements don't exist, create them
+                    const taskbarTime = document.getElementById('taskbar-time');
+                    if (taskbarTime) {
+                        // Clear any existing content
+                        taskbarTime.innerHTML = '';
+                        
+                        // Create the time display element if it doesn't exist
+                        const newTimeDisplay = document.createElement('div');
+                        newTimeDisplay.className = 'time-display';
+                        taskbarTime.appendChild(newTimeDisplay);
+                        
+                        // Create the date display element if it doesn't exist
+                        const newDateDisplay = document.createElement('div');
+                        newDateDisplay.className = 'date-display';
+                        taskbarTime.appendChild(newDateDisplay);
+                        
+                        // Try again with the new elements
+                        updateClock();
+                        return;
+                    }
+                }
+                
+                // Update time if element exists
+                if (timeDisplay) {
+                    const hours = now.getHours().toString().padStart(2, '0');
+                    const minutes = now.getMinutes().toString().padStart(2, '0');
+                    timeDisplay.textContent = `${hours}:${minutes}`;
+                }
+                
+                // Update date if element exists
+                if (dateDisplay) {
+                    const month = (now.getMonth() + 1).toString().padStart(2, '0');
+                    const day = now.getDate().toString().padStart(2, '0');
+                    const year = now.getFullYear();
+                    dateDisplay.textContent = `${month}/${day}/${year}`;
+                }
+            }
+            
+            updateClock();
+            setInterval(updateClock, 1000);
+
+            // Add play/pause button functionality with improved touch support
+            const playPauseButton = document.querySelector('.btn-play-pause');
+            if (playPauseButton) {
+                // Function to handle both click and touch events
+                const handlePlayPauseAction = function(e) {
+                    // Prevent any default actions
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // This will call the visualizer's togglePlayback method
+                    if (window.visualizerInstance) {
+                        console.log('Play/Pause button activated');
+                        window.visualizerInstance.togglePlayback();
+                        
+                        // Add a visual feedback that the button was clicked
+                        const originalBackground = this.style.backgroundColor || '';
+                        this.style.backgroundColor = '#d4ffd4';
+                        setTimeout(() => {
+                            this.style.backgroundColor = originalBackground;
+                        }, 300);
+                    }
+                    
+                    return false;
+                };
+                
+                // Add both click and touchend listeners
+                playPauseButton.addEventListener('click', handlePlayPauseAction);
+                playPauseButton.addEventListener('touchend', handlePlayPauseAction);
+            }
+
+            // Add visualization button functionality with improved touch support
+            const visualizationButton = document.querySelector('.btn-visualization');
+            if (visualizationButton) {
+                let visualizationStyle = 0; // Start with low intensity
+                const styleLabels = ['Low', 'Medium', 'High'];
+                
+                // Function to handle both click and touch events
+                const handleVisualizationAction = function(e) {
+                    // Prevent any default actions
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Rotate through visualization styles
+                    visualizationStyle = (visualizationStyle + 1) % 3;
+                    
+                    // Update button text
+                    this.textContent = `Visual: ${styleLabels[visualizationStyle]}`;
+                    
+                    // Update visualization in the Visualizer instance
+                    if (window.visualizerInstance) {
+                        window.visualizerInstance.updateVisualizationStyle(visualizationStyle);
+                        
+                        // Add visual feedback
+                        const originalBackground = this.style.backgroundColor || '';
+                        this.style.backgroundColor = '#d4f4ff';
+                        setTimeout(() => {
+                            this.style.backgroundColor = originalBackground;
+                        }, 300);
+                    }
+                    
+                    return false;
+                };
+                
+                // Add both click and touchend listeners
+                visualizationButton.addEventListener('click', handleVisualizationAction);
+                visualizationButton.addEventListener('touchend', handleVisualizationAction);
+            }
+            
+            // Add fullscreen functionality with improved touch support
+            const fullscreenButton = document.querySelector('.btn-fullscreen');
+            if (fullscreenButton) {
+                // Function to handle both click and touch events
+                const handleFullscreenAction = function(e) {
+                    // Prevent any default actions
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const wmpWindow = document.getElementById('wmp-window');
+                    
+                    if (wmpWindow) {
+                        if (wmpWindow.classList.contains('compact-mode')) {
+                            // Restore to normal size
+                            wmpWindow.classList.remove('compact-mode');
+                            this.textContent = 'Compact';
+                            
+                            // Show the window container elements again
+                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                            if (modalVisualizerContainer) {
+                                modalVisualizerContainer.style.display = 'block';
+                            }
+                        } else {
+                            // Shrink to compact mode
+                            wmpWindow.classList.add('compact-mode');
+                            this.textContent = 'Expand';
+                            
+                            // Hide the modal visualizer to make window smaller
+                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                            if (modalVisualizerContainer) {
+                                modalVisualizerContainer.style.display = 'none';
+                            }
+                            
+                            // Ensure window is not maximized
+                            wmpWindow.classList.remove('maximized');
+                            
+                            // Adjust size based on device
+                            if (window.innerWidth <= 768) {
+                                // Mobile size
+                                wmpWindow.style.width = '95%';
+                            } else {
+                                wmpWindow.style.width = '350px';
+                            }
+                            wmpWindow.style.height = 'auto';
+                            
+                            // If the window is off-screen, center it
+                            const rect = wmpWindow.getBoundingClientRect();
+                            if (rect.right > window.innerWidth || rect.bottom > window.innerHeight || 
+                                rect.left < 0 || rect.top < 0) {
+                                wmpWindow.style.left = '50%';
+                                wmpWindow.style.top = '40%';
+                                wmpWindow.style.transform = 'translate(-50%, -50%)';
+                            }
+                        }
+                        
+                        // Add visual feedback
+                        const originalBackground = this.style.backgroundColor || '';
+                        this.style.backgroundColor = '#f0f0f0';
+                        setTimeout(() => {
+                            this.style.backgroundColor = originalBackground;
+                        }, 300);
+                    }
+                    
+                    return false;
+                };
+                
+                // Add both click and touchend listeners
+                fullscreenButton.addEventListener('click', handleFullscreenAction);
+                fullscreenButton.addEventListener('touchend', handleFullscreenAction);
+                
+                // Update button text initially
+                fullscreenButton.textContent = 'Compact';
+            }
+            
+            // Add direct event listener for Spotify iframe interaction
+            const spotifyPlayer = document.getElementById('spotify-player');
+            if (spotifyPlayer) {
+                // Create a proxy for messages coming from the iframe
+                window.addEventListener('message', function(event) {
+                    if (event.source === spotifyPlayer.contentWindow) {
+                        console.log('Message from Spotify iframe:', event.data);
+                        
+                        // Process the message and update UI if needed
+                        if (window.visualizerInstance && event.data) {
+                            // Look for Spotify API messages that indicate playback state
+                            let isPlaying = null;
+                            
+                            try {
+                                // These are the various formats Spotify uses in their messages
+                                if (event.data.type === 'playback_update') {
+                                    isPlaying = !event.data.isPaused;
+                                } else if (event.data.type === 'player_state_changed') {
+                                    isPlaying = !event.data.payload?.paused;
+                                } else if (event.data.playing !== undefined) {
+                                    isPlaying = event.data.playing;
+                                } else if (event.data.data?.isPaused !== undefined) {
+                                    isPlaying = !event.data.data.isPaused;
+                                } else if (event.data.command === 'play') {
+                                    isPlaying = true;
+                                } else if (event.data.command === 'pause') {
+                                    isPlaying = false;
+                                }
+                                
+                                // Update visualizer if we detected a valid state change
+                                if (isPlaying !== null) {
+                                    window.visualizerInstance.updatePlaybackStatus(isPlaying);
+                                    window.visualizerInstance.intensity = isPlaying ? 1.0 : 0.5;
+                                }
+                            } catch (e) {
+                                console.warn('Error processing Spotify message:', e);
+                            }
+                        }
+                    }
+                });
+                
+                // Add a polling mechanism to check for changes in the iframe
+                let lastPlayState = false;
+                let spotifyCheckInterval = setInterval(() => {
+                    try {
+                        // Try different methods to detect playback state
+                        if (window.visualizerInstance) {
+                            // Method 1: Check if the iframe has specific UI elements that indicate playback
+                            let foundPlaying = false;
+                            
+                            // If clicked recently, check more aggressively 
+                            const iframe = document.querySelector('#spotify-player');
+                            if (iframe) {
+                                // Method 2: Use Spotify's iframe API if available
+                                if (window.visualizerInstance.spotifyController) {
+                                    window.visualizerInstance.spotifyController.getPlaybackState()
+                                    .then(state => {
+                                        const isPlaying = state && !state.isPaused;
+                                        if (isPlaying !== lastPlayState) {
+                                            lastPlayState = isPlaying;
+                                            window.visualizerInstance.updatePlaybackStatus(isPlaying);
+                                            window.visualizerInstance.intensity = isPlaying ? 1.0 : 0.5;
+                                            console.log('Detected playback change via API:', isPlaying);
+                                        }
+                                    })
+                                    .catch(err => {
+                                        // Silent fail, API might not be ready
+                                        foundPlaying = window.visualizerInstance.isPlaying;
+                                    });
+                                } else {
+                                    // Fallback - just update based on known state
+                                    foundPlaying = window.visualizerInstance.isPlaying;
+                                }
+                            }
+                        }
+                    } catch (e) {
+                        console.warn('Error in Spotify status check:', e);
+                    }
+                }, 1000); // Check every second
+                
+                // Make sure to clean up the interval when page unloads
+                window.addEventListener('beforeunload', () => {
+                    clearInterval(spotifyCheckInterval);
+                });
+            }
+        });
+    </script>
+</body>
+</html> 
