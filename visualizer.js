@@ -929,38 +929,38 @@ class Visualizer {
         
         // Handle Start button animation
         const startButton = document.querySelector('.start-button');
-        startButton.addEventListener('click', () => {
-            startButton.classList.toggle('active');
-            
-            // Replace alert with a more appropriate Windows XP dialog
-            if (this.isMobile) {
-                // Just a simple message for mobile
-                const notification = document.createElement('div');
-                notification.className = 'xp-notification';
-                notification.innerHTML = 'Start menu functionality coming soon!';
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.classList.add('fadeOut');
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 500);
-                }, 2000);
-            } else {
-                // More elaborate dialog for desktop (if we want to implement later)
-                const notification = document.createElement('div');
-                notification.className = 'xp-notification';
-                notification.innerHTML = 'Start menu functionality coming soon!';
-                document.body.appendChild(notification);
-                
-                setTimeout(() => {
-                    notification.classList.add('fadeOut');
-                    setTimeout(() => {
-                        notification.remove();
-                    }, 500);
-                }, 2000);
-            }
-        });
+      // startButton.addEventListener('click', () => {
+      //     startButton.classList.toggle('active');
+      //     
+      //     // Replace alert with a more appropriate Windows XP dialog
+      //     if (this.isMobile) {
+      //         // Just a simple message for mobile
+      //         const notification = document.createElement('div');
+      //       //  notification.className = 'xp-notification';
+      //        // notification.innerHTML = 'Start menu functionality coming soon!';
+      //       //  document.body.appendChild(notification);
+      //         
+      //         setTimeout(() => {
+      //             notification.classList.add('fadeOut');
+      //             setTimeout(() => {
+      //                 notification.remove();
+      //             }, 500);
+      //         }, 2000);
+      //     } else {
+      //         // More elaborate dialog for desktop (if we want to implement later)
+      //         const notification = document.createElement('div');
+      //         notification.className = 'xp-notification';
+      //         notification.innerHTML = 'Start menu functionality coming soon!';
+      //         document.body.appendChild(notification);
+      //         
+      //         setTimeout(() => {
+      //             notification.classList.add('fadeOut');
+      //             setTimeout(() => {
+      //                 notification.remove();
+      //             }, 500);
+      //         }, 2000);
+      //     }
+      // });
         
         // Make taskbar responsive to orientation changes
         window.addEventListener('orientationchange', () => {
@@ -1200,7 +1200,7 @@ class ModalVisualizer {
         this.eventListeners = {};
         
         // Initialize with inactive state
-        this.updateStatus('Ready - Press Play');
+        this.updateStatus('');
         
         // Set initial size
         this.handleResize();
@@ -1217,9 +1217,9 @@ class ModalVisualizer {
             if (!this.isInitialized) {
                 this.initialize();
             }
-            this.updateStatus('Visualizing');
+            //this.updateStatus('Visualizing');
         } else {
-            this.updateStatus('Paused');
+           // this.updateStatus('Paused');
         }
     }
     
@@ -1364,7 +1364,7 @@ class ModalVisualizer {
         if (this.isInitialized) return;
         
         try {
-            this.updateStatus('Initializing...');
+            //this.updateStatus('Initializing...');
             
             // Create the plane geometry for the shader
             const geometry = new THREE.PlaneGeometry(2, 2);
@@ -1381,12 +1381,12 @@ class ModalVisualizer {
             this.animate();
             
             this.isInitialized = true;
-            this.updateStatus('Ready');
+         //   this.updateStatus('Ready');
             
             // If already playing, update status
-            if (this.isPlaying) {
-                this.updateStatus('Visualizing');
-            }
+          //  if (this.isPlaying) {
+          //      this.updateStatus('Visualizing');
+          //  }
             
             this.handleResize();
             console.log('Modal visualizer initialized');
@@ -1435,19 +1435,10 @@ class ModalVisualizer {
     }
     
     updateStatus(message) {
+        // Function disabled - no status text will be shown
         if (this.statusElement) {
-            this.statusElement.textContent = message;
-            
-            // Add visual status
-            if (message.includes('Paused')) {
-                this.statusElement.style.backgroundColor = 'rgba(255, 165, 0, 0.7)';
-            } else if (message.includes('Visualizing')) {
-                this.statusElement.style.backgroundColor = 'rgba(0, 128, 0, 0.7)';
-            } else if (message.includes('Error')) {
-                this.statusElement.style.backgroundColor = 'rgba(255, 0, 0, 0.7)';
-            } else {
-                this.statusElement.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
-            }
+            this.statusElement.style.opacity = '0';
+            this.statusElement.style.display = 'none';
         }
     }
 

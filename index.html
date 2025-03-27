@@ -76,6 +76,8 @@
             font-size: 12px;
             pointer-events: none;
             transition: opacity 0.3s ease;
+            opacity: 0;
+            display: none;
         }
         
         /* Hide visualizer on compact mode */
@@ -88,7 +90,8 @@
             position: relative;
             z-index: 15; /* Higher than window */
             min-height: 152px;
-            margin-bottom: 10px;
+            height: 152px;
+            
             display: block !important;
             visibility: visible !important;
             width: 100%;
@@ -136,11 +139,9 @@
             color: white;
             font-weight: bold;
         }
-        .window-body {
-            padding: 10px;
-        }
+         
         .controls {
-            display: flex;
+            display: none;
             gap: 10px;
             margin-top: 10px;
         }
@@ -155,7 +156,7 @@
             z-index: 1000;
             display: flex;
             align-items: center;
-            padding: 0 2px;
+             
             border-top: 1px solid #6787e3;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.3);
             box-sizing: border-box; /* Include padding in width calculation */
@@ -164,7 +165,7 @@
         .start-button {
             height: 36px;
             padding: 1px 8px;
-            margin: 0 4px;
+            
             display: flex;
             align-items: center;
             background: linear-gradient(to bottom, #3ba13b 0%, #3ba13b 12%, #40ab40 25%, #40ab40 37%, #45b645 50%, #45b645 62%, #51c751 75%, #51c751 87%, #47b847 100%);
@@ -510,7 +511,7 @@
             /* Simplified controls for mobile */
             .controls {
                 margin-top: 10px;
-                display: flex;
+                display: none;
                 justify-content: space-around;
                 align-items: center;
                 width: 100%;
@@ -543,7 +544,10 @@
             
             .player-container {
                 background-color: rgb(70, 86, 78);
-                min-height: 152px;
+                height: 152px; /* Exact height to prevent resizing */
+                width: 100%;
+                overflow: hidden;
+                box-sizing: border-box;
             }
             
             #spotify-player {
@@ -551,9 +555,10 @@
                 visibility: visible;
                 position: relative;
                 z-index: 20;
-                overflow: visible;
+                overflow: hidden;
                 background-color: white;
-                min-height: 152px;
+                height: 152px;
+                width: 100%;
             }
             
             #spotify-embed-iframe, 
@@ -563,7 +568,8 @@
                 position: relative;
                 z-index: 20;
                 background-color: white;
-                min-height: 152px;
+                height: 152px;
+                width: 100%;
             }
             
             /* Debugging - Mark buttons to see if they're visibly rendered correctly */
@@ -673,16 +679,167 @@
         /* Existing styles continue below */
         .player-container {
             background-color: rgb(70, 86, 78);
-            min-height: 152px;
-            position: relative;
-            z-index: 10;
-            margin-bottom: 20px;
+            height: 152px; /* Exact height to prevent resizing */
+            width: 100%;
+            position: relative; /* Restore position */
+            z-index: 10; /* Restore z-index */
+            margin-bottom: 20px; /* Restore margin */
+            overflow: hidden;
+            box-sizing: border-box;
         }
         
         /* Ensure the controls always have a higher z-index than other elements */
         .controls {
             position: relative;
             z-index: 100;
+        }
+
+        /* Windows XP Loading Screen Styles */
+        .windows-loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a246a; /* Classic Windows XP blue */
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 1;
+            transition: opacity 0.5s ease-out;
+        }
+        
+        .windows-loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: white;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .loading-text {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+        
+        .loading-description {
+            margin-top: 15px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+        
+        .loading-bar-container {
+            width: 300px;
+            height: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            margin: 0 auto;
+            padding: 3px;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.2) inset;
+            overflow: hidden;
+        }
+        
+        .loading-bar {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(to right, 
+                rgba(255, 255, 255, 0.9), 
+                rgba(210, 232, 255, 0.9));
+            border-radius: 7px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-bar::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to right,
+                transparent 0%,
+                rgba(255, 255, 255, 0.7) 50%,
+                transparent 100%);
+            animation: loading-bar-slide 1.5s infinite linear;
+        }
+        
+        @keyframes loading-bar-slide {
+            0% {
+                transform: translateX(0%);
+            }
+            100% {
+                transform: translateX(200%);
+            }
+        }
+        
+        /* Windows XP logo animation */
+        .windows-logo {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 8px;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 30px auto;
+        }
+        
+        .windows-flag {
+            border-radius: 5px;
+            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
+            animation: flag-wave 3s infinite;
+        }
+        
+        .windows-flag.red {
+            background: #f65314;
+            animation-delay: 0s;
+        }
+        
+        .windows-flag.green {
+            background: #7cbb00;
+            animation-delay: 0.25s;
+        }
+        
+        .windows-flag.blue {
+            background: #00a1f1;
+            animation-delay: 0.5s;
+        }
+        
+        .windows-flag.yellow {
+            background: #ffbb00;
+            animation-delay: 0.75s;
+        }
+        
+        @keyframes flag-wave {
+            0%, 100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(0.9);
+                opacity: 0.8;
+            }
+        }
+        
+        /* Mobile optimizations for loading screen */
+        @media (max-width: 768px) {
+            .loading-bar-container {
+                width: 250px;
+            }
+            
+            .loading-text {
+                font-size: 20px;
+            }
+            
+            .windows-logo {
+                width: 100px;
+                height: 100px;
+            }
         }
     </style>
 </head>
@@ -700,10 +857,10 @@
             </div>
         </div>
         <div class="window-body">
-            <div class="player-container" style="position: relative; z-index: 15; min-height: 152px; background-color: rgb(70 86 78);">
+            <div class="player-container" style="position: relative; z-index: 15; height: 152px; width: 100%; background-color: rgb(70 86 78); overflow: hidden; box-sizing: border-box;">
                 <!-- Updated Spotify iframe with more reliable configuration -->
                 <iframe id="spotify-player"
-                    style="border-radius:12px; display: block !important; position: relative; z-index: 20; width: 100%; height: 152px; visibility: visible; opacity: 1; background-color: white;"
+                    style="border-radius:12px; display: block !important; position: relative; z-index: 20; width: 100%; height: 152px; visibility: visible; opacity: 1; background-color: white; background-image: linear-gradient(to bottom, #f5f5f5, #eaeaea);"
                     src="https://open.spotify.com/embed/track/3oBVv54hTMSYXXJGxO5JxJ?utm_source=generator&theme=0"
                     frameBorder="0"
                     allowfullscreen=""
@@ -717,7 +874,7 @@
             <!-- Add secondary canvas visualization inside the window -->
             <div class="modal-visualizer-container" style="position: relative; width: 100%; height: 150px; margin-top: 10px; border: 1px solid #999; border-radius: 5px; overflow: hidden;">
                 <canvas id="modal-visualizer" width="100%" height="100%" style="width: 100%; height: 100%; display: block;"></canvas>
-                <div class="visualization-status" style="position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;">Ready</div>
+                <div class="visualization-status" style="display: none; opacity: 0; position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;"></div>
             </div>
             
             <div class="controls">
@@ -739,13 +896,7 @@
             </div>
         </div>
         <div class="window-body">
-            <div class="window-toolbar">
-                <button class="toolbar-button">Back</button>
-                <button class="toolbar-button">Forward</button>
-                <button class="toolbar-button">Stop</button>
-                <button class="toolbar-button">Refresh</button>
-                <button class="toolbar-button">Home</button>
-            </div>
+            
             <div class="ie-address-bar">
                 <span>Address:</span> https://links.winxp-media-player.com/
             </div>
@@ -795,11 +946,148 @@
         </div>
     </div>
 
+    <!-- Windows XP Loading Screen Overlay -->
+    <div id="windows-loading-overlay" class="windows-loading-overlay">
+        <div class="loading-content">
+            <div class="windows-logo">
+                <div class="windows-flag red"></div>
+                <div class="windows-flag green"></div>
+                <div class="windows-flag blue"></div>
+                <div class="windows-flag yellow"></div>
+            </div>
+            <div class="loading-text">Starting Windows Media Player...</div>
+            <div class="loading-bar-container">
+                <div class="loading-bar"></div>
+            </div>
+            <div class="loading-description">Please wait while the player loads...</div>
+        </div>
+    </div>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="visualizer.js"></script>
     <script>
         // Add window control functionality
         document.addEventListener('DOMContentLoaded', function() {
+            // Handle Windows XP loading screen
+            const loadingOverlay = document.getElementById('windows-loading-overlay');
+            const loadingBar = document.querySelector('.loading-bar');
+            const spotifyIframe = document.getElementById('spotify-player');
+            
+            // Start loading animation
+            let loadingProgress = 0;
+            let loadingInterval;
+            let loadingTimeout;
+            
+            function startLoadingAnimation() {
+                // Animate the loading bar to show progress
+                loadingInterval = setInterval(() => {
+                    loadingProgress += 0.5;
+                    
+                    // Cap progress at 90% until iframe is actually loaded
+                    if (loadingProgress <= 90) {
+                        updateLoadingBar(loadingProgress);
+                    }
+                }, 100);
+                
+                // Set a maximum timeout (15 seconds) to hide loading screen even if iframe doesn't load
+                loadingTimeout = setTimeout(() => {
+                    completeLoading();
+                }, 15000);
+            }
+            
+            function updateLoadingBar(progress) {
+                const cappedProgress = Math.min(progress, 100);
+                
+                // For the Windows XP style indeterminate loading bar, we don't
+                // actually need to change the bar width based on progress.
+                // Instead, we'll change the loading message at certain points
+                
+                if (progress > 80) {
+                    document.querySelector('.loading-description').textContent = 'Almost ready...';
+                } else if (progress > 50) {
+                    document.querySelector('.loading-description').textContent = 'Loading Spotify player...';
+                } else if (progress > 20) {
+                    document.querySelector('.loading-description').textContent = 'Initializing audio system...';
+                }
+            }
+            
+            function completeLoading() {
+                // Clear any pending intervals/timeouts
+                clearInterval(loadingInterval);
+                clearTimeout(loadingTimeout);
+                
+                // Update final loading state
+                document.querySelector('.loading-description').textContent = 'Ready!';
+                
+                // Wait a moment to show the completed message
+                setTimeout(() => {
+                    // Hide the loading overlay
+                    loadingOverlay.classList.add('hidden');
+                    
+                    // Remove it from DOM after animation completes
+                    setTimeout(() => {
+                        loadingOverlay.style.display = 'none';
+                    }, 500);
+                }, 500);
+            }
+            
+            // Start loading animation immediately
+            startLoadingAnimation();
+            
+            // Listen for iframe load event
+            spotifyIframe.addEventListener('load', function() {
+                // Wait a short moment to ensure iframe is fully interactive
+                setTimeout(() => {
+                    completeLoading();
+                }, 1000);
+            });
+            
+            // Check if iframe is already loaded (might happen with cached pages)
+            if (spotifyIframe.complete || spotifyIframe.readyState === 4) {
+                setTimeout(() => {
+                    completeLoading();
+                }, 1000);
+            }
+            
+            // Listen for the Spotify iframe API to be ready
+            window.onSpotifyIframeApiReady = function(IFrameAPI) {
+                // This means the Spotify iframe API is ready
+                console.log('Spotify Iframe API Ready');
+                
+                // Create a Spotify controller when available
+                if (window.visualizerInstance) {
+                    IFrameAPI.createController(
+                        document.getElementById('spotify-player'), 
+                        { 
+                            uri: 'spotify:track:3oBVv54hTMSYXXJGxO5JxJ' 
+                        }, 
+                        (controller) => {
+                            window.visualizerInstance.spotifyController = controller;
+                            console.log('Spotify controller created');
+                            
+                            // If we get here, we know the iframe is fully ready
+                            completeLoading();
+                        }
+                    );
+                }
+            };
+            
+            // Additional check - in case the normal events don't trigger
+            // Check a few times for iframe content visibility
+            let readinessCheckCount = 0;
+            const checkIframeReadiness = setInterval(() => {
+                readinessCheckCount++;
+                
+                const iframeDoc = spotifyIframe.contentDocument || 
+                                 (spotifyIframe.contentWindow && spotifyIframe.contentWindow.document);
+                                 
+                // If we can see iframe content, it's probably ready
+                if (iframeDoc || readinessCheckCount > 20) {
+                    completeLoading();
+                    clearInterval(checkIframeReadiness);
+                }
+            }, 500); // Check every 500ms
+            
             // Set up windows
             const wmpWindow = document.getElementById('wmp-window');
             const ieWindow = document.getElementById('ie-window');
