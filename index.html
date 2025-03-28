@@ -3702,7 +3702,7 @@
                 </div>
             </div>
             <!-- Loading bar removed -->
-            <div class="loading-description">Ho sentito questa musica</div>
+            <div class="loading-description">Ho sentito musica</div>
         </div>
     </div>
 
@@ -3753,7 +3753,7 @@
                 clearTimeout(loadingTimeout);
                 
                 // Update final loading state
-                document.querySelector('.loading-description').textContent = 'Ti penso...';
+                document.querySelector('.loading-description').textContent = 'non ho potuto fare a meno di pensare...';
                 
                 // Wait a moment to show the completed message
                 setTimeout(() => {
@@ -3786,7 +3786,7 @@
                 // Get the current URL
                 const url = window.location.href;
                 // Format the share text as specified
-                const shareText = `Ti penso - mentre ascolto: ${url}`;
+                const shareText = `Ti penso - mentre ascolto:`;
                 
                 // Check if the Web Share API is supported (mainly on mobile)
                 if (navigator.share) {
