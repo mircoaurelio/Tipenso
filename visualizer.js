@@ -853,41 +853,41 @@ class Visualizer {
             isDragging = false;
             titleBar.style.opacity = "1.0";
         });
-        
+
         document.addEventListener('touchcancel', () => {
             isDragging = false;
             titleBar.style.opacity = "1.0";
         });
 
-        // Handle window controls
-        const closeButton = document.querySelector('button[aria-label="Close"]');
-        const maximizeButton = document.querySelector('button[aria-label="Maximize"]');
-        const minimizeButton = document.querySelector('button[aria-label="Minimize"]');
+        // Handle window controls (commented out to avoid conflict with index.html handlers)
+        // const closeButton = document.querySelector('button[aria-label="Close"]');
+        // const maximizeButton = document.querySelector('button[aria-label="Maximize"]');
+        // const minimizeButton = document.querySelector('button[aria-label="Minimize"]');
 
-        closeButton.addEventListener('click', () => {
-            windowElement.style.display = 'none';
-        });
+        // closeButton.addEventListener('click', () => {
+        //     windowElement.style.display = 'none';
+        // });
 
-        maximizeButton.addEventListener('click', () => {
-            if (windowElement.style.width === '100vw' || windowElement.classList.contains('maximized')) {
-                windowElement.style.width = '';
-                windowElement.style.height = '';
-                windowElement.style.top = '';
-                windowElement.style.left = '';
-                windowElement.classList.remove('maximized');
-                
-                // After restoring, reposition appropriately
-                this.positionWindowForDevice();
-            } else {
-                windowElement.classList.add('maximized');
-                windowElement.style.width = '100vw';
-                windowElement.style.height = `calc(100vh - ${this.isMobile ? '70' : '60'}px)`;
-                windowElement.style.top = '0';
-                windowElement.style.left = '0';
-                windowElement.style.transform = 'none';
-                windowElement.style.margin = '0';
-            }
-        });
+        // maximizeButton.addEventListener('click', () => {
+        //     if (windowElement.style.width === '100vw' || windowElement.classList.contains('maximized')) {
+        //         windowElement.style.width = '';
+        //         windowElement.style.height = '';
+        //         windowElement.style.top = '';
+        //         windowElement.style.left = '';
+        //         windowElement.classList.remove('maximized');
+        //         
+        //         // After restoring, reposition appropriately
+        //         this.positionWindowForDevice();
+        //     } else {
+        //         windowElement.classList.add('maximized');
+        //         windowElement.style.width = '100vw';
+        //         windowElement.style.height = `calc(100vh - ${this.isMobile ? '40' : '40'}px)`;
+        //         windowElement.style.top = '0';
+        //         windowElement.style.left = '0';
+        //         windowElement.style.transform = 'none';
+        //         windowElement.style.margin = '0';
+        //     }
+        // });
 
         // Add visualization style button functionality
         const vizButton = document.querySelector('.btn-visualization');
