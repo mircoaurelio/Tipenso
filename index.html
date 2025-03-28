@@ -50,7 +50,7 @@
         .modal-visualizer-container {
             position: relative;
             width: 100%;
-            height: 150px;
+            height: 250px;
             margin-top: 10px;
             border: 1px solid #999;
             border-radius: 5px;
@@ -120,11 +120,12 @@
             background-color: white;
         }
         
+        /* Enhance the glass effect for all maximized windows */
         .window.maximized {
             width: 100% !important;
             max-width: 100% !important;
             width: 100vw !important;
-            height: calc(100vh - 40px) !important; /* Taskbar is 40px */
+            height: calc(100vh - 40px) !important;
             top: 0 !important;
             left: 0 !important;
             right: 0 !important;
@@ -138,12 +139,12 @@
             padding: 0 !important;
             bottom: 40px !important;
             
-            /* Windows glass effect */
-            background-color: rgba(225, 230, 246, 0.75) !important; /* More blueish for Windows Aero look */
-            backdrop-filter: blur(15px) !important;
-            -webkit-backdrop-filter: blur(15px) !important;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.4) !important;
-            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+            /* Enhanced Windows glass effect */
+            background-color: rgba(236, 233, 216, 0.7) !important; /* More transparent for better glass effect */
+            backdrop-filter: blur(15px) saturate(125%) !important; /* Increased blur and saturation for more noticeable effect */
+            -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important; /* Slightly more visible border */
         }
         
         /* Enhanced Windows title bar for maximized state */
@@ -180,12 +181,12 @@
             right: 0 !important;
             bottom: 60px !important;
             
-            /* Windows glass effect */
-            background-color: rgba(225, 230, 246, 0.75) !important; /* More blueish for Windows Aero look */
-            backdrop-filter: blur(15px) !important;
-            -webkit-backdrop-filter: blur(15px) !important;
-            box-shadow: 0 0 30px rgba(0, 0, 0, 0.4) !important;
-            border: 1px solid rgba(255, 255, 255, 0.5) !important;
+            /* Enhanced Windows glass effect for WMP specifically */
+            background-color: rgba(236, 233, 216, 0.7) !important;
+            backdrop-filter: blur(15px) saturate(125%) !important;
+            -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.6) !important;
         }
         
         /* Additional styling for WMP in maximized state */
@@ -301,8 +302,8 @@
             box-shadow: inset 1px 1px 3px rgba(0, 0, 0, 0.2);
         }
         .program-button img {
-            height: 18px;
-            width: 18px;
+            height: 24px; /* Bigger icon */
+            width: 24px;
             object-fit: contain;
         }
         .taskbar-time {
@@ -356,11 +357,20 @@
             border-radius: 3px;
         }
         .quick-launch-icon img {
-            width: 18px; /* Reduced from 20px */
-            height: 18px; /* Reduced from 20px */
+            width: 24px; /* Bigger icon */
+            height: 24px; /* Make icons square and consistent with desktop */
             object-fit: contain;
             max-width: 100%;
             max-height: 100%;
+        }
+        
+        /* Specifically update the mobile version */
+        @media (max-width: 768px) {
+            .quick-launch-icon img {
+                width: 24px; /* Bigger icon */
+                height: 24px; /* Make icons square and consistent */
+                object-fit: contain;
+            }
         }
         
         /* Link styles for IE window */
@@ -493,7 +503,7 @@
             }
             
             .quick-launch-icon img {
-                width: 16px; /* Smaller icon */
+                width: 24px; /* Smaller icon */
                 height: 16px;
             }
             
@@ -505,9 +515,10 @@
             }
             
             .program-button img {
-                height: 16px; /* Smaller icon */
-                width: 16px;
+                height: 24px; /* Bigger icon */
+                width: 24px;
                 margin-right: 3px;
+                object-fit: contain;
             }
             
             .active-programs {
@@ -731,24 +742,24 @@
                     padding: 0 !important;
                     bottom: 70px !important; /* Also update bottom */
                     
-                    /* Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    -webkit-backdrop-filter: blur(10px) !important;
+                    /* Enhanced Windows glass effect for mobile */
+                    background-color: rgba(236, 233, 216, 0.7) !important;
+                    backdrop-filter: blur(15px) saturate(125%) !important;
+                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
                 }
                 
                 #wmp-window.maximized {
                     height: calc(100vh - 40px) !important; /* Taskbar is 40px */
                     bottom: 40px !important;
                     
-                    /* Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    -webkit-backdrop-filter: blur(10px) !important;
+                    /* Enhanced Windows glass effect for WMP specifically */
+                    background-color: rgba(236, 233, 216, 0.7) !important;
+                    backdrop-filter: blur(15px) saturate(125%) !important;
+                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
                 }
             }
         }
@@ -1103,11 +1114,11 @@
                 bottom: 40px !important; /* Also update bottom */
                 
                 /* Windows glass effect for mobile */
-                background-color: rgba(236, 233, 216, 0.85) !important;
-                backdrop-filter: blur(10px) !important;
-                -webkit-backdrop-filter: blur(10px) !important;
+                background-color: rgba(236, 233, 216, 0.7) !important;
+                backdrop-filter: blur(15px) saturate(125%) !important;
+                -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                border: 1px solid rgba(255, 255, 255, 0.6) !important;
             }
             
             #wmp-window.maximized {
@@ -1115,11 +1126,11 @@
                 bottom: 40px !important;
                 
                 /* Windows glass effect for mobile */
-                background-color: rgba(236, 233, 216, 0.85) !important;
-                backdrop-filter: blur(10px) !important;
-                -webkit-backdrop-filter: blur(10px) !important;
+                background-color: rgba(236, 233, 216, 0.7) !important;
+                backdrop-filter: blur(15px) saturate(125%) !important;
+                -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                border: 1px solid rgba(255, 255, 255, 0.6) !important;
             }
             
             .ie-link {
@@ -1280,11 +1291,11 @@
                     bottom: 70px !important; /* Also update bottom */
                     
                     /* Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    -webkit-backdrop-filter: blur(10px) !important;
+                    background-color: rgba(236, 233, 216, 0.7) !important;
+                    backdrop-filter: blur(15px) saturate(125%) !important;
+                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
                 }
                 
                 #wmp-window.maximized {
@@ -1292,11 +1303,11 @@
                     bottom: 40px !important;
                     
                     /* Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.85) !important;
-                    backdrop-filter: blur(10px) !important;
-                    -webkit-backdrop-filter: blur(10px) !important;
+                    background-color: rgba(236, 233, 216, 0.7) !important;
+                    backdrop-filter: blur(15px) saturate(125%) !important;
+                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                     box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
                 }
             }
         }
@@ -1386,7 +1397,7 @@
         /* Remove 8px margin from window-body when maximized */
         .window.maximized .window-body {
             margin: 0 !important;
-            background-color: #000;
+            background-color: transparent !important; /* Windows classic background color */
             border-top: none !important;
             box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.1) !important;
         }
@@ -1420,7 +1431,7 @@
             </div>
             
             <!-- Add secondary canvas visualization inside the window -->
-            <div class="modal-visualizer-container" style="position: relative; width: 100%; height: 150px; margin-top: 10px; border: 1px solid #999; border-radius: 5px; overflow: hidden;">
+            <div class="modal-visualizer-container" style="position: relative; width: 100%; height: 250px; margin-top: 10px; border: 1px solid #999; border-radius: 5px; overflow: hidden;">
                 <canvas id="modal-visualizer" width="100%" height="100%" style="width: 100%; height: 100%; display: block;"></canvas>
                 <div class="visualization-status" style="display: none; opacity: 0; position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;"></div>
                 
@@ -1838,99 +1849,102 @@
                 
                 // Maximize button functionality
                 maximizeBtn.addEventListener('click', function() {
-                    // Call the same function that the expand button uses to ensure consistent behavior
-                    // First, get a reference to the expand button
-                    const fullscreenButton = document.querySelector('.btn-fullscreen');
-                    
-                    if (fullscreenButton) {
-                        // Create an event-like object
-                        const fakeEvent = {
-                            preventDefault: function() {},
-                            stopPropagation: function() {}
-                        };
+                    // Instead of always using WMP's handler, check which window we're in first
+                    if (windowElement.id === 'wmp-window') {
+                        // For WMP window, use the fullscreen button handler
+                        const fullscreenButton = document.querySelector('.btn-fullscreen');
                         
-                        // Get the expand button's handler function
-                        const handleFullscreenAction = function(e) {
-                            // Prevent any default actions
-                            e.preventDefault();
-                            e.stopPropagation();
+                        if (fullscreenButton) {
+                            // Create an event-like object
+                            const fakeEvent = {
+                                preventDefault: function() {},
+                                stopPropagation: function() {}
+                            };
                             
-                            const wmpWindow = document.getElementById('wmp-window');
-                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
-                            const isMobile = window.innerWidth <= 768;
-                            const taskbarHeight = 40; // Consistent 40px taskbar height
-                            
-                            if (wmpWindow) {
-                                // If already maximized, restore to normal size
-                                if (wmpWindow.classList.contains('maximized')) {
-                                    // Switch back to normal mode (not compact)
-                                    wmpWindow.classList.remove('maximized');
-                                    wmpWindow.classList.remove('compact-mode');
-                                    fullscreenButton.textContent = 'Expand';
-                                    
-                                    // Clear all important styles when restoring
-                                    const stylesToClear = ['width', 'height', 'top', 'left', 'right', 'bottom', 'margin', 'position', 'transform', 'z-index', 'border-radius', 'overflow', 'box-sizing', 'padding', 'max-width'];
-                                    stylesToClear.forEach(style => {
-                                        wmpWindow.style[style] = '';
-                                    });
-                                    
-                                    // Restore visualizer to normal size
-                                    if (modalVisualizerContainer) {
-                                        modalVisualizerContainer.style.display = 'block';
-                                        modalVisualizerContainer.style.height = '150px';
-                                        modalVisualizerContainer.style.minHeight = '150px';
-                                    }
-                                } else {
-                                    // Go to maximized size directly
-                                    wmpWindow.classList.remove('compact-mode');
-                                    wmpWindow.classList.add('maximized');
-                                    fullscreenButton.textContent = 'Compact';
-                                    
-                                    // Show the visualizer container
-                                    if (modalVisualizerContainer) {
-                                        if (isMobile) {
-                                            modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 244px)', 'important');
-                                            modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
-                                        } else {
-                                            modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 230px)', 'important');
-                                            modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
+                            // Get the expand button's handler function
+                            const handleFullscreenAction = function(e) {
+                                // Prevent any default actions
+                                e.preventDefault();
+                                e.stopPropagation();
+                                
+                                const wmpWindow = document.getElementById('wmp-window');
+                                const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                                const isMobile = window.innerWidth <= 768;
+                                const taskbarHeight = 40; // Consistent 40px taskbar height
+                                
+                                // Rest of the WMP maximize handler...
+                                if (wmpWindow) {
+                                    // If already maximized, restore to normal size
+                                    if (wmpWindow.classList.contains('maximized')) {
+                                        // Switch back to normal mode (not compact)
+                                        wmpWindow.classList.remove('maximized');
+                                        wmpWindow.classList.remove('compact-mode');
+                                        fullscreenButton.textContent = 'Expand';
+                                        
+                                        // Clear all important styles when restoring
+                                        const stylesToClear = ['width', 'height', 'top', 'left', 'right', 'bottom', 'margin', 'position', 'transform', 'z-index', 'border-radius', 'overflow', 'box-sizing', 'padding', 'max-width'];
+                                        stylesToClear.forEach(style => {
+                                            wmpWindow.style[style] = '';
+                                        });
+                                        
+                                        // Restore visualizer to normal size
+                                        if (modalVisualizerContainer) {
+                                            modalVisualizerContainer.style.display = 'block';
+                                            modalVisualizerContainer.style.height = '250px';
+                                            modalVisualizerContainer.style.minHeight = '250px';
                                         }
-                                        modalVisualizerContainer.style.setProperty('display', 'block', 'important');
-                                        modalVisualizerContainer.style.setProperty('visibility', 'visible', 'important');
+                                    } else {
+                                        // Go to maximized size directly
+                                        wmpWindow.classList.remove('compact-mode');
+                                        wmpWindow.classList.add('maximized');
+                                        fullscreenButton.textContent = 'Compact';
+                                        
+                                        // Show the visualizer container
+                                        if (modalVisualizerContainer) {
+                                            if (isMobile) {
+                                                modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 244px)', 'important');
+                                                modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
+                                            } else {
+                                                modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 230px)', 'important');
+                                                modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
+                                            }
+                                            modalVisualizerContainer.style.setProperty('display', 'block', 'important');
+                                            modalVisualizerContainer.style.setProperty('visibility', 'visible', 'important');
+                                        }
+                                        
+                                        // Set maximized styles
+                                        wmpWindow.style.setProperty('width', '100%', 'important');
+                                        wmpWindow.style.setProperty('max-width', '100%', 'important');
+                                        wmpWindow.style.setProperty('width', '100vw', 'important');
+                                        wmpWindow.style.setProperty('height', `calc(100vh - ${taskbarHeight}px)`, 'important');
+                                        wmpWindow.style.setProperty('top', '0', 'important');
+                                        wmpWindow.style.setProperty('left', '0', 'important');
+                                        wmpWindow.style.setProperty('right', '0', 'important');
+                                        wmpWindow.style.setProperty('margin', '0', 'important');
+                                        wmpWindow.style.setProperty('position', 'fixed', 'important');
+                                        wmpWindow.style.setProperty('transform', 'none', 'important');
+                                        wmpWindow.style.setProperty('z-index', '2000', 'important');
+                                        wmpWindow.style.setProperty('border-radius', '0', 'important');
+                                        wmpWindow.style.setProperty('overflow', 'hidden', 'important');
+                                        wmpWindow.style.setProperty('box-sizing', 'border-box', 'important');
+                                        wmpWindow.style.setProperty('padding', '0', 'important');
+                                        wmpWindow.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
                                     }
                                     
-                                    // Set maximized styles
-                                    wmpWindow.style.setProperty('width', '100%', 'important');
-                                    wmpWindow.style.setProperty('max-width', '100%', 'important');
-                                    wmpWindow.style.setProperty('width', '100vw', 'important');
-                                    wmpWindow.style.setProperty('height', `calc(100vh - ${taskbarHeight}px)`, 'important');
-                                    wmpWindow.style.setProperty('top', '0', 'important');
-                                    wmpWindow.style.setProperty('left', '0', 'important');
-                                    wmpWindow.style.setProperty('right', '0', 'important');
-                                    wmpWindow.style.setProperty('margin', '0', 'important');
-                                    wmpWindow.style.setProperty('position', 'fixed', 'important');
-                                    wmpWindow.style.setProperty('transform', 'none', 'important');
-                                    wmpWindow.style.setProperty('z-index', '2000', 'important');
-                                    wmpWindow.style.setProperty('border-radius', '0', 'important');
-                                    wmpWindow.style.setProperty('overflow', 'hidden', 'important');
-                                    wmpWindow.style.setProperty('box-sizing', 'border-box', 'important');
-                                    wmpWindow.style.setProperty('padding', '0', 'important');
-                                    wmpWindow.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
+                                    // Trigger resize event to make sure visualizer renders correctly
+                                    setTimeout(() => {
+                                        window.dispatchEvent(new Event('resize'));
+                                    }, 50);
                                 }
                                 
-                                // Trigger resize event to make sure visualizer renders correctly
-                                setTimeout(() => {
-                                    window.dispatchEvent(new Event('resize'));
-                                }, 50);
-                            }
+                                return false;
+                            };
                             
-                            return false;
-                        };
-                        
-                        // Call the function with our fake event
-                        handleFullscreenAction.call(fullscreenButton, fakeEvent);
+                            // Call the function with our fake event
+                            handleFullscreenAction.call(fullscreenButton, fakeEvent);
+                        }
                     } else {
-                        // Fallback if expand button doesn't exist
+                        // For other windows (like IE), use standard maximize logic
                         if (windowElement.classList.contains('maximized')) {
                             // Restore to normal size
                             windowElement.classList.remove('maximized');
@@ -1949,7 +1963,7 @@
                         } else {
                             // Go to maximized mode
                             const isMobile = window.innerWidth <= 768;
-                            const taskbarHeight = isMobile ? 40 : 40;
+                            const taskbarHeight = 40;
                             
                             windowElement.classList.add('maximized');
                             windowElement.style.setProperty('width', '100%', 'important');
@@ -1960,6 +1974,14 @@
                             windowElement.style.setProperty('left', '0', 'important');
                             windowElement.style.setProperty('right', '0', 'important');
                             windowElement.style.setProperty('margin', '0', 'important');
+                            windowElement.style.setProperty('position', 'fixed', 'important');
+                            windowElement.style.setProperty('transform', 'none', 'important');
+                            windowElement.style.setProperty('z-index', '2000', 'important');
+                            windowElement.style.setProperty('border-radius', '0', 'important');
+                            windowElement.style.setProperty('overflow', 'hidden', 'important');
+                            windowElement.style.setProperty('box-sizing', 'border-box', 'important');
+                            windowElement.style.setProperty('padding', '0', 'important');
+                            windowElement.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
                         }
                     }
                 });
@@ -2198,8 +2220,8 @@
                             // Restore visualizer to normal size
                             if (modalVisualizerContainer) {
                                 modalVisualizerContainer.style.display = 'block';
-                                modalVisualizerContainer.style.height = '150px';
-                                modalVisualizerContainer.style.minHeight = '150px';
+                                modalVisualizerContainer.style.height = '250px';
+                                modalVisualizerContainer.style.minHeight = '250px';
                             }
                             
                             // If the window is off-screen, center it
