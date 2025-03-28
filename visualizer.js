@@ -11,7 +11,7 @@ class Visualizer {
         });
 
         this.clock = new THREE.Clock();
-        this.intensity = 0.5;
+        this.intensity = 2;
         this.visualizationIntensity = 1.0;
         this.isMobile = this.checkIfMobile();
         
