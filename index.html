@@ -35,6 +35,7 @@
             min-width: 300px;
             background: rgba(236, 233, 216, 0.95);
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+            transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, transform 0.3s ease;
         }
         
         /* Compact mode for the window - shows more background */
@@ -55,7 +56,7 @@
             border-radius: 5px;
             overflow: hidden;
             background-color: #000;
-            transition: height 0.3s ease;
+            transition: height 0.3s ease, min-height 0.3s ease, display 0.1s ease;
         }
         
         #modal-visualizer {
@@ -120,9 +121,55 @@
         }
         
         .window.maximized {
+            width: 100vw !important;
+            height: calc(100vh - 60px) !important;
+            top: 0 !important;
+            left: 0 !important;
             margin: 0 !important;
+            position: fixed !important;
+            transition: all 0.3s ease;
+            transform: none !important;
             border-radius: 0 !important;
+            max-width: none !important;
+            overflow: hidden !important; /* Prevent overflow */
+            box-sizing: border-box !important;
+            padding: 0 !important; /* Remove any padding */
+            border: none !important; /* Remove borders */
         }
+        
+        /* Reset all window specific styles */
+        #wmp-window.maximized .window-body {
+            box-sizing: border-box !important;
+            width: 100% !important;
+            height: calc(100% - 30px) !important; /* Account for titlebar */
+            overflow: hidden !important;
+            padding: 2px !important; /* Minimal padding */
+        }
+        
+        /* Fix specifically for the WMP window when maximized */
+        #wmp-window.maximized {
+            width: 100vw !important;
+            height: calc(100vh - 60px) !important;
+            max-width: none !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            margin: 0 !important;
+            z-index: 2000 !important;
+            border-radius: 0 !important;
+            box-sizing: border-box !important;
+            overflow: hidden !important; /* Prevent overflow */
+            padding: 0 !important; /* Remove any padding */
+            border: none !important; /* Remove borders */
+        }
+        
+        /* Ensure the player container doesn't overflow when maximized */
+        #wmp-window.maximized .player-container {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+        }
+        
         .window.minimized {
             display: none !important;
         }
@@ -624,7 +671,7 @@
                 
                 .window.maximized {
                     width: 100vw !important;
-                    height: calc(100vh - 60px) !important;
+                    height: calc(100vh - 70px) !important;
                     top: 0 !important;
                     left: 0 !important;
                     margin: 0 !important;
@@ -882,28 +929,31 @@
             bottom: 10px;
             right: 10px;
             z-index: 25;
-            background-color: rgba(255, 255, 255, 0.9);
-            border: 1px solid #bbb;
-            border-radius: 8px;
+            background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
+            border: 1px solid #7BA7E1;
+            border-radius: 3px;
             width: auto;
             height: auto;
             padding: 8px 12px;
-            display: flex; /* Changed from none to flex to make it visible by default */
+            display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
             transition: all 0.2s ease;
+            font-family: 'Tahoma', sans-serif;
         }
         
         .share-button:hover {
-            background-color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 3px 7px rgba(0,0,0,0.4);
+            background: linear-gradient(to bottom, #F3FAFF 0%, #E2F0FC 50%, #D6EDFF 51%, #C1E3FF 100%);
+            border-color: #8CB8F3;
+            transform: scale(1.02);
+            box-shadow: 0 3px 7px rgba(0,0,0,0.3);
         }
         
         .share-button:active {
-            transform: scale(0.95);
+            background: linear-gradient(to bottom, #C1E3FF 0%, #D6EDFF 50%, #E2F0FC 51%, #F3FAFF 100%);
+            transform: scale(0.98);
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
         
@@ -915,23 +965,131 @@
             .share-button {
                 bottom: 12px;
                 right: 12px;
-                display: flex; /* Show on mobile */
-                background-color: rgba(255, 255, 255, 0.95);
+                display: flex;
+                background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
                 box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-                border-radius: 8px;
+                border-radius: 3px;
                 width: auto;
                 padding: 8px 12px;
+                border: 1px solid #7BA7E1;
+                font-family: "Tahoma", sans-serif;
             }
             
             .share-button span {
                 font-size: 14px;
                 font-weight: bold;
+                color: #000;
+                text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
             }
             
             .share-button svg {
                 width: 16px;
                 height: 16px;
+                color: #0046D5;
             }
+            
+            /* Enhanced controls for mobile */
+            .controls {
+                display: flex !important;
+                padding: 10px 5px;
+                margin-top: 10px;
+                justify-content: space-around;
+            }
+            
+            .controls button {
+                padding: 10px 15px;
+                font-size: 14px;
+                min-height: 44px;
+                min-width: 80px;
+                margin: 0 3px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+            }
+            
+            .controls button:active {
+                background: linear-gradient(to bottom, #C1E3FF 0%, #D6EDFF 50%, #E2F0FC 51%, #F3FAFF 100%);
+                transform: scale(0.97);
+            }
+            
+            /* Ensure maximize/expand works properly on mobile */
+            .window.maximized {
+                width: 100vw !important;
+                height: calc(100vh - 70px) !important;
+                top: 0 !important;
+                left: 0 !important;
+                margin: 0 !important;
+                position: fixed !important;
+                transition: all 0.3s ease;
+                transform: none !important;
+                border-radius: 0;
+            }
+            
+            .window.maximized .modal-visualizer-container {
+                height: calc(100vh - 250px) !important;
+                min-height: 300px !important;
+                transition: height 0.3s ease;
+            }
+        }
+
+        /* Buttons in Windows XP style */
+        .controls button {
+            background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
+            border: 1px solid #7BA7E1;
+            color: #000;
+            font-family: 'Tahoma', sans-serif;
+            border-radius: 3px;
+            text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+            padding: 8px 12px;
+            cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+        
+        .controls button:hover {
+            background: linear-gradient(to bottom, #F3FAFF 0%, #E2F0FC 50%, #D6EDFF 51%, #C1E3FF 100%);
+            border-color: #8CB8F3;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        .controls button:active {
+            background: linear-gradient(to bottom, #C1E3FF 0%, #D6EDFF 50%, #E2F0FC 51%, #F3FAFF 100%);
+            transform: scale(0.98);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+        
+        /* Window state transitions */
+        .window {
+            transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, transform 0.3s ease;
+        }
+        
+        /* Make transitions smoother for visualizer container */
+        .modal-visualizer-container {
+            transition: height 0.3s ease, min-height 0.3s ease, display 0.1s ease;
+        }
+        
+        /* Additional styling for WMP in maximized state */
+        #wmp-window.maximized .modal-visualizer-container {
+            visibility: visible !important;
+            display: block !important;
+        }
+        
+        /* Ensure all controls are visible in maximized state */
+        #wmp-window.maximized .controls {
+            display: flex !important;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        
+        /* Reset any fixed width that might be interfering with maximization */
+        #wmp-window {
+            max-width: 800px; /* Default max-width */
+            width: auto; /* Let it size naturally */
+            transition: all 0.3s ease;
+        }
+        
+        #wmp-window.maximized {
+            max-width: none !important; /* Override max-width when maximized */
         }
     </style>
 </head>
@@ -968,9 +1126,9 @@
                 <div class="visualization-status" style="display: none; opacity: 0; position: absolute; top: 10px; left: 10px; padding: 5px; background: rgba(0,0,0,0.5); color: white; border-radius: 3px; font-size: 12px;"></div>
                 
                 <!-- Share button added to bottom of visualizer -->
-                <button id="share-button" class="share-button" style="position: absolute; bottom: 10px; right: 10px; z-index: 25; background-color: rgba(255, 255, 255, 0.9); border: 1px solid #bbb; border-radius: 8px; width: auto; height: auto; padding: 8px 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.2s ease;">
-                    <span style="margin-right: 8px; font-size: 13px; font-weight: bold; color: #333;">invialo a chi stai pensando</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: #333;">
+                <button id="share-button" class="share-button" style="position: absolute; bottom: 10px; right: 10px; z-index: 25; background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%); border: 1px solid #7BA7E1; border-radius: 3px; width: auto; height: auto; padding: 8px 12px; display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 2px 5px rgba(0,0,0,0.3); transition: all 0.2s ease; font-family: 'Tahoma', sans-serif;">
+                    <span style="margin-right: 8px; font-size: 13px; font-weight: bold; color: #000; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);">invialo a chi stai pensando</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#0046D5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <circle cx="18" cy="5" r="3"></circle>
                         <circle cx="6" cy="12" r="3"></circle>
                         <circle cx="18" cy="19" r="3"></circle>
@@ -981,9 +1139,9 @@
             </div>
             
             <div class="controls">
-                <button class="btn-play-pause">Play/Pause</button>
-                <button class="btn-visualization">Visual: Low</button>
-                <button class="btn-fullscreen">Fullscreen</button>
+                <button class="btn-play-pause" style="background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%); border: 1px solid #7BA7E1; color: #000; font-family: 'Tahoma', sans-serif; border-radius: 3px; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); padding: 8px 12px;">Play/Pause</button>
+                <button class="btn-visualization" style="background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%); border: 1px solid #7BA7E1; color: #000; font-family: 'Tahoma', sans-serif; border-radius: 3px; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); padding: 8px 12px;">Visual: Low</button>
+                <button class="btn-fullscreen" style="background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%); border: 1px solid #7BA7E1; color: #000; font-family: 'Tahoma', sans-serif; border-radius: 3px; text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5); padding: 8px 12px;">Expand</button>
             </div>
         </div>
     </div>
@@ -1383,19 +1541,77 @@
                 maximizeBtn.addEventListener('click', function() {
                     if (windowElement.classList.contains('maximized')) {
                         windowElement.classList.remove('maximized');
-                        windowElement.style.width = '';
-                        windowElement.style.height = '';
-                        windowElement.style.top = '';
-                        windowElement.style.left = '';
+                        
+                        // Clear all important styles when restoring
+                        const stylesToClear = ['width', 'height', 'top', 'left', 'margin', 'position', 'transform', 'z-index',
+                                             'border-radius', 'box-sizing', 'overflow', 'padding', 'border'];
+                        stylesToClear.forEach(style => {
+                            windowElement.style[style] = '';
+                        });
+                        
+                        // For WMP window, also restore visualizer to normal size
+                        if (windowElement.id === 'wmp-window') {
+                            const fullscreenButton = document.querySelector('.btn-fullscreen');
+                            if (fullscreenButton) {
+                                fullscreenButton.textContent = 'Expand';
+                            }
+                            
+                            // Restore visualizer to normal size
+                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                            if (modalVisualizerContainer) {
+                                modalVisualizerContainer.style.height = '150px';
+                                modalVisualizerContainer.style.minHeight = '150px';
+                                modalVisualizerContainer.style.display = 'block';
+                            }
+                        }
                     } else {
+                        const isMobile = window.innerWidth <= 768;
+                        
+                        // Apply maximized class
                         windowElement.classList.add('maximized');
-                        windowElement.style.width = '100vw';
-                        windowElement.style.height = `calc(100vh - ${window.innerWidth <= 768 ? '70' : '60'}px)`;
-                        windowElement.style.top = '0';
-                        windowElement.style.left = '0';
-                        windowElement.style.transform = 'none';
-                        windowElement.style.margin = '0';
+                        windowElement.classList.remove('compact-mode');
+                        
+                        // For WMP window, also update the button and visualizer
+                        if (windowElement.id === 'wmp-window') {
+                            const fullscreenButton = document.querySelector('.btn-fullscreen');
+                            if (fullscreenButton) {
+                                fullscreenButton.textContent = 'Compact';
+                            }
+                            
+                            // Expand visualizer for WMP window
+                            const modalVisualizerContainer = document.querySelector('.modal-visualizer-container');
+                            if (modalVisualizerContainer) {
+                                if (isMobile) {
+                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 250px)', 'important');
+                                    modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
+                                } else {
+                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 230px)', 'important');
+                                    modalVisualizerContainer.style.setProperty('min-height', '200px', 'important');
+                                }
+                                modalVisualizerContainer.style.display = 'block';
+                            }
+                        }
+                        
+                        // Use setProperty to ensure styles are applied with !important
+                        windowElement.style.setProperty('width', '100vw', 'important');
+                        windowElement.style.setProperty('height', `calc(100vh - ${isMobile ? '70' : '60'}px)`, 'important');
+                        windowElement.style.setProperty('top', '0', 'important');
+                        windowElement.style.setProperty('left', '0', 'important');
+                        windowElement.style.setProperty('margin', '0', 'important');
+                        windowElement.style.setProperty('position', 'fixed', 'important');
+                        windowElement.style.setProperty('transform', 'none', 'important');
+                        windowElement.style.setProperty('z-index', '2000', 'important');
+                        windowElement.style.setProperty('border-radius', '0', 'important');
+                        windowElement.style.setProperty('box-sizing', 'border-box', 'important');
+                        windowElement.style.setProperty('overflow', 'hidden', 'important');
+                        windowElement.style.setProperty('padding', '0', 'important');
+                        windowElement.style.setProperty('border', 'none', 'important');
                     }
+                    
+                    // Trigger resize event to ensure visualizer updates
+                    setTimeout(() => {
+                        window.dispatchEvent(new Event('resize'));
+                    }, 50);
                 });
                 
                 // Close button functionality
@@ -1615,6 +1831,9 @@
                     const isMobile = window.innerWidth <= 768;
                     
                     if (wmpWindow) {
+                        // Check if we should synchronize behavior with the maximize button
+                        const maximizeBtn = document.querySelector('#wmp-window button[aria-label="Maximize"]');
+                        
                         if (wmpWindow.classList.contains('compact-mode')) {
                             // Restore to expanded size
                             wmpWindow.classList.remove('compact-mode');
@@ -1625,30 +1844,56 @@
                                 modalVisualizerContainer.style.display = 'block';
                             }
                             
-                            // For mobile, make it fill the screen and visualizer take more space
-                            if (isMobile) {
-                                wmpWindow.classList.add('maximized');
-                                wmpWindow.style.width = '100vw';
-                                wmpWindow.style.height = `calc(100vh - 60px)`;
-                                wmpWindow.style.top = '0';
-                                wmpWindow.style.left = '0';
-                                wmpWindow.style.margin = '0';
-                                
-                                // Make visualizer larger
-                                if (modalVisualizerContainer) {
-                                    modalVisualizerContainer.style.height = 'calc(100vh - 250px)';
-                                    modalVisualizerContainer.style.minHeight = '300px';
+                            // Apply maximized class
+                            wmpWindow.classList.add('maximized');
+                            
+                            // Use setProperty to ensure styles are applied with !important
+                            wmpWindow.style.setProperty('width', '100vw', 'important');
+                            wmpWindow.style.setProperty('height', `calc(100vh - ${isMobile ? '70' : '60'}px)`, 'important');
+                            wmpWindow.style.setProperty('top', '0', 'important');
+                            wmpWindow.style.setProperty('left', '0', 'important');
+                            wmpWindow.style.setProperty('margin', '0', 'important');
+                            wmpWindow.style.setProperty('position', 'fixed', 'important');
+                            wmpWindow.style.setProperty('transform', 'none', 'important');
+                            wmpWindow.style.setProperty('z-index', '2000', 'important');
+                            wmpWindow.style.setProperty('border-radius', '0', 'important');
+                            wmpWindow.style.setProperty('box-sizing', 'border-box', 'important');
+                            wmpWindow.style.setProperty('overflow', 'hidden', 'important');
+                            wmpWindow.style.setProperty('padding', '0', 'important');
+                            wmpWindow.style.setProperty('border', 'none', 'important');
+                            
+                            // Make visualizer larger
+                            if (modalVisualizerContainer) {
+                                if (isMobile) {
+                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 250px)', 'important');
+                                    modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
+                                } else {
+                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 230px)', 'important');
+                                    modalVisualizerContainer.style.setProperty('min-height', '200px', 'important');
                                 }
-                            } else {
-                                // For desktop, restore to standard size
-                                wmpWindow.style.width = '';
-                                wmpWindow.style.height = '';
+                            }
+                            
+                            // Synchronize with maximize button by visually highlighting it
+                            if (maximizeBtn) {
+                                // Give visual feedback on the maximize button
+                                const originalBg = maximizeBtn.style.backgroundColor;
+                                maximizeBtn.style.backgroundColor = '#e0e0e0';
+                                setTimeout(() => {
+                                    maximizeBtn.style.backgroundColor = originalBg;
+                                }, 300);
                             }
                         } else {
                             // Shrink to compact mode
                             wmpWindow.classList.add('compact-mode');
                             wmpWindow.classList.remove('maximized');
                             this.textContent = 'Expand';
+                            
+                            // Clear all important styles when switching to compact
+                            const stylesToClear = ['width', 'height', 'top', 'left', 'margin', 'position', 'transform', 'z-index', 
+                                                  'border-radius', 'box-sizing', 'overflow', 'padding', 'border'];
+                            stylesToClear.forEach(style => {
+                                wmpWindow.style[style] = '';
+                            });
                             
                             // Hide the modal visualizer to make window smaller
                             if (modalVisualizerContainer) {
@@ -1661,6 +1906,10 @@
                             if (isMobile) {
                                 // Mobile size
                                 wmpWindow.style.width = '95%';
+                                // Position in center
+                                wmpWindow.style.left = '50%';
+                                wmpWindow.style.top = '25%';
+                                wmpWindow.style.transform = 'translateX(-50%)';
                             } else {
                                 wmpWindow.style.width = '350px';
                             }
@@ -1674,6 +1923,16 @@
                                 wmpWindow.style.top = '40%';
                                 wmpWindow.style.transform = 'translate(-50%, -50%)';
                             }
+                            
+                            // Synchronize with maximize button by visually highlighting it
+                            if (maximizeBtn) {
+                                // Give visual feedback on the maximize button
+                                const originalBg = maximizeBtn.style.backgroundColor;
+                                maximizeBtn.style.backgroundColor = '#e0e0e0';
+                                setTimeout(() => {
+                                    maximizeBtn.style.backgroundColor = originalBg;
+                                }, 300);
+                            }
                         }
                         
                         // Add visual feedback
@@ -1684,7 +1943,9 @@
                         }, 300);
                         
                         // Trigger resize event to make sure visualizer renders correctly
-                        window.dispatchEvent(new Event('resize'));
+                        setTimeout(() => {
+                            window.dispatchEvent(new Event('resize'));
+                        }, 50);
                     }
                     
                     return false;
@@ -1695,7 +1956,7 @@
                 fullscreenButton.addEventListener('touchend', handleFullscreenAction);
                 
                 // Update button text initially
-                fullscreenButton.textContent = 'Compact';
+                fullscreenButton.textContent = 'Expand';
             }
             
             // Add direct event listener for Spotify iframe interaction
