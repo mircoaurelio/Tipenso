@@ -1184,6 +1184,7 @@ class ModalVisualizer {
         this.isPlaying = false;
         this.isInitialized = false;
         this.statusElement = document.querySelector('.visualization-status');
+        this.visualizationMode = 0; // Add mode tracking: 0 = kaleidoscopic, 1 = rotating line
         
         // Setup the canvas renderer
         this.renderer = new THREE.WebGLRenderer({
@@ -1208,6 +1209,37 @@ class ModalVisualizer {
         // Initialize our effects only when play starts
         this.material = null;
         this.mesh = null;
+        
+        // Add click listener to the background image
+        this.setupImageClickHandler();
+    }
+    
+    // Add method to setup image click handler
+    setupImageClickHandler() {
+        // Find the background image element
+        const backgroundImg = document.querySelector('.modal-visualizer-container > img');
+        if (backgroundImg) {
+            backgroundImg.style.cursor = 'pointer'; // Change cursor to indicate it's clickable
+            backgroundImg.addEventListener('click', () => {
+                this.changeVisualizationMode();
+            });
+            console.log('Image click handler set up successfully');
+        } else {
+            console.warn('Background image not found for click handler');
+        }
+    }
+    
+    // Add method to change visualization mode
+    changeVisualizationMode() {
+        this.visualizationMode = (this.visualizationMode + 1) % 2; // Toggle between modes
+        console.log(`Visualization mode changed to: ${this.visualizationMode === 0 ? 'Kaleidoscope' : 'Rotating Line'}`);
+        
+        // If already initialized, recreate the shader material
+        if (this.isInitialized && this.mesh) {
+            const newMaterial = this.createShaderMaterial();
+            this.mesh.material = newMaterial;
+            this.material = newMaterial;
+        }
     }
     
     updatePlaybackStatus(isPlaying) {
@@ -1219,7 +1251,7 @@ class ModalVisualizer {
             }
             //this.updateStatus('Visualizing');
         } else {
-           // this.updateStatus('Paused');
+            //this.updateStatus('Paused');
         }
     }
     
@@ -1233,120 +1265,221 @@ class ModalVisualizer {
             }
         `;
         
-        // Kaleidoscopic LSD trip shader
-        const fragmentShader = `
-            uniform float iTime;
-            uniform vec2 iResolution;
-            uniform float iIntensity;
-            
-            varying vec2 vUv;
-            
-            // HSV to RGB conversion
-            vec3 hsv2rgb(vec3 c) {
-                vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
-                vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
-                return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
-            }
-            
-            // Noise functions for psychedelic effects
-            float random(vec2 st) {
-                return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
-            }
-            
-            float noise(vec2 st) {
-                vec2 i = floor(st);
-                vec2 f = fract(st);
+        // Choose shader based on current mode
+        let fragmentShader;
+        
+        if (this.visualizationMode === 0) {
+            // Kaleidoscopic LSD trip shader (original)
+            fragmentShader = `
+                uniform float iTime;
+                uniform vec2 iResolution;
+                uniform float iIntensity;
                 
-                // Four corners in 2D of a tile
-                float a = random(i);
-                float b = random(i + vec2(1.0, 0.0));
-                float c = random(i + vec2(0.0, 1.0));
-                float d = random(i + vec2(1.0, 1.0));
+                varying vec2 vUv;
                 
-                // Smooth interpolation
-                vec2 u = f * f * (3.0 - 2.0 * f);
-                
-                // Mix 4 corners
-                return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
-            }
-            
-            void main() {
-                vec2 uv = vUv;
-                float time = iTime * 0.5; // Slower time for better trip effect
-                
-                // Center coordinate system
-                vec2 p = uv - 0.5;
-                
-                // Kaleidoscopic mirror effect
-                float angle = atan(p.y, p.x);
-                float radius = length(p);
-                
-                // Create mirrored kaleidoscope segments
-                float segments = 8.0 + 4.0 * sin(time * 0.2);
-                float segmentAngle = 3.14159 * 2.0 / segments;
-                angle = mod(angle, segmentAngle);
-                angle = abs(angle - segmentAngle * 0.5);
-                
-                // Convert back to Cartesian
-                p = radius * vec2(cos(angle), sin(angle));
-                
-                // Apply time-based distortion to position
-                p += 0.1 * sin(p.x * 3.0 + time) * sin(p.y * 3.0 + time * 0.8);
-                
-                // LSD-like color waves
-                float r = length(p) * 2.0;
-                
-                // Multiple layers of psychedelic patterns
-                float pattern1 = 0.5 + 0.5 * sin(r * 5.0 - time * 1.5);
-                float pattern2 = 0.5 + 0.5 * sin(r * 10.0 + angle * 8.0 + time * 0.8);
-                float pattern3 = 0.5 + 0.5 * cos(r * 15.0 - angle * 4.0 - time);
-                
-                // Fractal-like recursive pattern
-                vec2 fractalUV = p;
-                float fractalLayer = 0.0;
-                for (int i = 0; i < 5; i++) {
-                    fractalUV = 2.0 * fractalUV - 1.0;
-                    fractalUV *= 1.5;
-                    fractalUV = fractalUV * 0.9 + 0.1 * sin(fractalUV.yx * 1.5 + time * (0.5 + float(i) * 0.1));
-                    fractalLayer += 0.5 + 0.5 * sin(length(fractalUV) * 5.0 - float(i) * 0.5 + time);
+                // HSV to RGB conversion
+                vec3 hsv2rgb(vec3 c) {
+                    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
                 }
-                fractalLayer /= 5.0;
                 
-                // Noise-based distortion
-                float noisePattern = noise(uv * 5.0 + time * 0.3);
+                // Noise functions for psychedelic effects
+                float random(vec2 st) {
+                    return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123);
+                }
                 
-                // Combine patterns
-                float finalPattern = pattern1 * 0.3 + pattern2 * 0.3 + pattern3 * 0.2 + fractalLayer * 0.2;
+                float noise(vec2 st) {
+                    vec2 i = floor(st);
+                    vec2 f = fract(st);
+                    
+                    // Four corners in 2D of a tile
+                    float a = random(i);
+                    float b = random(i + vec2(1.0, 0.0));
+                    float c = random(i + vec2(0.0, 1.0));
+                    float d = random(i + vec2(1.0, 1.0));
+                    
+                    // Smooth interpolation
+                    vec2 u = f * f * (3.0 - 2.0 * f);
+                    
+                    // Mix 4 corners
+                    return mix(a, b, u.x) + (c - a) * u.y * (1.0 - u.x) + (d - b) * u.x * u.y;
+                }
                 
-                // Create psychedelic coloring
-                vec3 color;
+                void main() {
+                    vec2 uv = vUv;
+                    float time = iTime * 0.5; // Slower time for better trip effect
+                    
+                    // Center coordinate system
+                    vec2 p = uv - 0.5;
+                    
+                    // Kaleidoscopic mirror effect
+                    float angle = atan(p.y, p.x);
+                    float radius = length(p);
+                    
+                    // Create mirrored kaleidoscope segments
+                    float segments = 8.0 + 4.0 * sin(time * 0.2);
+                    float segmentAngle = 3.14159 * 2.0 / segments;
+                    angle = mod(angle, segmentAngle);
+                    angle = abs(angle - segmentAngle * 0.5);
+                    
+                    // Convert back to Cartesian
+                    p = radius * vec2(cos(angle), sin(angle));
+                    
+                    // Apply time-based distortion to position
+                    p += 0.1 * sin(p.x * 3.0 + time) * sin(p.y * 3.0 + time * 0.8);
+                    
+                    // LSD-like color waves
+                    float r = length(p) * 2.0;
+                    
+                    // Multiple layers of psychedelic patterns
+                    float pattern1 = 0.5 + 0.5 * sin(r * 5.0 - time * 1.5);
+                    float pattern2 = 0.5 + 0.5 * sin(r * 10.0 + angle * 8.0 + time * 0.8);
+                    float pattern3 = 0.5 + 0.5 * cos(r * 15.0 - angle * 4.0 - time);
+                    
+                    // Fractal-like recursive pattern
+                    vec2 fractalUV = p;
+                    float fractalLayer = 0.0;
+                    for (int i = 0; i < 5; i++) {
+                        fractalUV = 2.0 * fractalUV - 1.0;
+                        fractalUV *= 1.5;
+                        fractalUV = fractalUV * 0.9 + 0.1 * sin(fractalUV.yx * 1.5 + time * (0.5 + float(i) * 0.1));
+                        fractalLayer += 0.5 + 0.5 * sin(length(fractalUV) * 5.0 - float(i) * 0.5 + time);
+                    }
+                    fractalLayer /= 5.0;
+                    
+                    // Noise-based distortion
+                    float noisePattern = noise(uv * 5.0 + time * 0.3);
+                    
+                    // Combine patterns
+                    float finalPattern = pattern1 * 0.3 + pattern2 * 0.3 + pattern3 * 0.2 + fractalLayer * 0.2;
+                    
+                    // Create psychedelic coloring
+                    vec3 color;
+                    
+                    // Color based on radial distance and angle with time variations
+                    float hue = fract(r * 0.5 + time * 0.1 + angle / 3.14159);
+                    float sat = 0.8 + 0.2 * sin(time);
+                    float val = finalPattern * (0.7 + 0.3 * noisePattern);
+                    
+                    // Apply playback intensity
+                    val *= 0.3 + 0.7 * iIntensity;
+                    
+                    // Generate vibrant color
+                    color = hsv2rgb(vec3(hue, sat, val));
+                    
+                    // Add outer glow for more trippiness
+                    float glow = smoothstep(0.4, 0.0, radius) * 0.5 * iIntensity;
+                    color += hsv2rgb(vec3(fract(time * 0.05), 0.8, 1.0)) * glow;
+                    
+                    // Add pulsing brightness when music plays
+                    float pulse = 0.8 + 0.2 * sin(time * 2.0);
+                    color *= mix(0.5, pulse, iIntensity);
+                    
+                    // Add subtle scanlines
+                    float scanline = 0.9 + 0.1 * sin(uv.y * 100.0);
+                    color *= scanline;
+                    
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `;
+        } else {
+            // New shader with rotating line that leaves traces
+            fragmentShader = `
+                uniform float iTime;
+                uniform vec2 iResolution;
+                uniform float iIntensity;
                 
-                // Color based on radial distance and angle with time variations
-                float hue = fract(r * 0.5 + time * 0.1 + angle / 3.14159);
-                float sat = 0.8 + 0.2 * sin(time);
-                float val = finalPattern * (0.7 + 0.3 * noisePattern);
+                varying vec2 vUv;
                 
-                // Apply playback intensity
-                val *= 0.3 + 0.7 * iIntensity;
+                // HSV to RGB conversion
+                vec3 hsv2rgb(vec3 c) {
+                    vec4 K = vec4(1.0, 2.0 / 3.0, 1.0 / 3.0, 3.0);
+                    vec3 p = abs(fract(c.xxx + K.xyz) * 6.0 - K.www);
+                    return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
+                }
                 
-                // Generate vibrant color
-                color = hsv2rgb(vec3(hue, sat, val));
-                
-                // Add outer glow for more trippiness
-                float glow = smoothstep(0.4, 0.0, radius) * 0.5 * iIntensity;
-                color += hsv2rgb(vec3(fract(time * 0.05), 0.8, 1.0)) * glow;
-                
-                // Add pulsing brightness when music plays
-                float pulse = 0.8 + 0.2 * sin(time * 2.0);
-                color *= mix(0.5, pulse, iIntensity);
-                
-                // Add subtle scanlines
-                float scanline = 0.9 + 0.1 * sin(uv.y * 100.0);
-                color *= scanline;
-                
-                gl_FragColor = vec4(color, 1.0);
-            }
-        `;
+                void main() {
+                    vec2 uv = vUv;
+                    vec2 center = vec2(0.5);
+                    vec2 p = uv - center;
+                    
+                    // Base background color (dark)
+                    vec3 color = vec3(0.05, 0.05, 0.07);
+                    
+                    // Time variables
+                    float time = iTime;
+                    float fadeTime = 5.0; // How long traces remain visible
+                    
+                    // Rotating line parameters
+                    float lineLength = 0.4;
+                    float lineWidth = 0.01 + 0.01 * iIntensity;
+                    
+                    // Create multiple rotating lines with different speeds and colors
+                    for (int i = 0; i < 5; i++) {
+                        float speed = 0.5 + float(i) * 0.15;
+                        float phase = float(i) * 1.256;
+                        float angle = time * speed + phase;
+                        
+                        // Current line position
+                        vec2 lineDir = vec2(cos(angle), sin(angle));
+                        
+                        // Store previous line positions for trail effect
+                        for (int j = 0; j < 30; j++) {
+                            float pastTime = time - float(j) * 0.05;
+                            if (pastTime < 0.0) continue;
+                            
+                            float pastAngle = pastTime * speed + phase;
+                            vec2 pastLineDir = vec2(cos(pastAngle), sin(pastAngle));
+                            
+                            // Calculate distance from point to line segment
+                            vec2 lineStart = center - pastLineDir * lineLength;
+                            vec2 lineEnd = center + pastLineDir * lineLength;
+                            
+                            vec2 lineVec = lineEnd - lineStart;
+                            float lineLength = length(lineVec);
+                            vec2 lineNorm = lineVec / lineLength;
+                            
+                            // Project point onto line
+                            float projection = dot(uv - lineStart, lineNorm);
+                            projection = clamp(projection, 0.0, lineLength);
+                            
+                            vec2 closestPoint = lineStart + lineNorm * projection;
+                            float dist = length(uv - closestPoint);
+                            
+                            // Fade effect based on time and distance
+                            float fade = 1.0 - float(j) / 30.0;
+                            float glow = exp(-dist * (30.0 - float(j) * 0.5)) * fade;
+                            
+                            // Different color for each line
+                            float hue = float(i) / 5.0 + time * 0.05;
+                            vec3 lineColor = hsv2rgb(vec3(hue, 0.8, 1.0));
+                            
+                            // Add color to the scene
+                            color += lineColor * glow * (0.3 + 0.7 * iIntensity);
+                        }
+                    }
+                    
+                    // Add some twinkling stars in the background
+                    for (int i = 0; i < 3; i++) {
+                        float starPhase = float(i) * 1.5;
+                        vec2 grid = floor(uv * (8.0 + float(i) * 6.0));
+                        float star = fract(sin(dot(grid, vec2(234.567, 567.891)) + time * 0.5 + starPhase) * 5678.9);
+                        
+                        if (star > 0.97) {
+                            float starGlow = pow(star, 20.0) * 2.0;
+                            color += vec3(starGlow) * (0.5 + 0.5 * sin(time * 2.0 + grid.x * grid.y));
+                        }
+                    }
+                    
+                    // Apply pulsing effect when music is playing
+                    float pulse = 1.0 + 0.2 * sin(time * 3.0) * iIntensity;
+                    color *= pulse;
+                    
+                    gl_FragColor = vec4(color, 1.0);
+                }
+            `;
+        }
         
         // Create THREE.js shader material
         return new THREE.ShaderMaterial({

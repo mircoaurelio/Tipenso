@@ -1457,7 +1457,7 @@
     <!-- Internet Explorer window -->
     <div class="window ie-window minimized" id="ie-window">
         <div class="title-bar">
-            <div class="title-bar-text">Internet Explorer</div>
+            <div class="title-bar-text">Vibes Explorer</div>
             <div class="title-bar-controls">
                 <button aria-label="Minimize"></button>
                 <button aria-label="Maximize"></button>
