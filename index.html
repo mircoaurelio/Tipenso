@@ -1387,7 +1387,7 @@
             width: 100%;
             position: relative; /* Restore position */
             z-index: 10; /* Restore z-index */
-           
+            
             overflow: hidden;
             box-sizing: border-box;
         }
@@ -2244,7 +2244,7 @@
                 background-color: rgb(70, 86, 78);
                 height: 152px; /* Exact height to prevent resizing */
                 width: 100%;
-                overflow: hidden;
+            overflow: hidden;
                 box-sizing: border-box;
             }
             
@@ -2717,13 +2717,13 @@
                 -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
                 box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
                 border: 1px solid rgba(255, 255, 255, 0.6) !important;
-                }
-                
-                #wmp-window.maximized {
+            }
+            
+            #wmp-window.maximized {
                 height: calc(100vh - 40px) !important; /* Taskbar is 40px */
                 bottom: 40px !important;
-                    
-                    /* Windows glass effect for mobile */
+                
+                /* Windows glass effect for mobile */
                 background-color: rgba(236, 233, 216, 0.7) !important;
                 backdrop-filter: blur(15px) saturate(125%) !important;
                 -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
@@ -2995,7 +2995,7 @@
             width: 100%;
             position: relative; /* Restore position */
             z-index: 10; /* Restore z-index */
-           
+            
             overflow: hidden;
             box-sizing: border-box;
         }
@@ -4721,6 +4721,244 @@
                 window.addEventListener('beforeunload', () => {
                     clearInterval(spotifyCheckInterval);
                 });
+            }
+        });
+    </script>
+    
+    <!-- CRT Shader Overlay -->
+    <div id="crt-overlay-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999999999999999999; opacity: 0.7;">
+        <canvas id="crt-overlay" style="width: 100%; height: 100%;"></canvas>
+    </div>
+    
+    <!-- CRT Effect Toggle Controls (Windows 98 style) -->
+    <div class="crt-toggle-container" style="display: none; position: fixed; bottom: 20px; right: 20px; z-index: 10000; background-color: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; padding: 6px; font-family: 'MS Sans Serif', sans-serif; font-size: 11px;">
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span>CRT Effect:</span>
+                <button id="toggle-crt-effect" class="window-button" style="padding: 2px 8px; background: #c0c0c0; border: 2px solid; border-color: #ffffff #808080 #808080 #ffffff; margin-left: 4px;">ON</button>
+            </div>
+            <div style="display: flex; align-items: center; margin-top: 2px;">
+                <span>Intensity:</span>
+                <input type="range" id="crt-intensity" min="0.1" max="1.0" step="0.1" value="0.9" style="width: 100px; margin-left: 4px;">
+                <span id="intensity-value" style="margin-left: 4px; min-width: 20px;">0.9</span>
+            </div>
+            <div style="display: flex; align-items: center; margin-top: 2px;">
+                <span>Mode:</span>
+                <select id="crt-mode" style="margin-left: 4px; background: #fff; border: 2px inset #808080; font-family: 'MS Sans Serif', sans-serif; font-size: 11px;">
+                    <option value="crt">CRT Monitor</option>
+                    <option value="lcd">Early LCD</option>
+                    <option value="xp">Windows XP</option>
+                    <option value="win98">Windows 98</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // CRT Shader Effect Implementation
+        class CRTOverlay {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+                
+                // Get the canvas and setup renderer
+                this.canvas = document.getElementById('crt-overlay');
+                this.renderer = new THREE.WebGLRenderer({
+                    canvas: this.canvas,
+                    alpha: true
+                });
+                
+                this.clock = new THREE.Clock();
+                this.intensity = 0.6; // Increased from 0.8 for better brightness
+                this.enabled = true;
+                this.mode = 'crt'; // Default mode
+                
+                // Set renderer size to match window
+                this.handleResize();
+                
+                // Setup resize listener
+                window.addEventListener('resize', () => this.handleResize());
+                
+                // Setup controls
+                this.setupControls();
+                
+                // Initialize with shader loading
+                this.initialize();
+            }
+            
+            setupControls() {
+                // Toggle button
+                this.toggleButton = document.getElementById('toggle-crt-effect');
+                this.toggleButton.addEventListener('click', () => this.toggleEffect());
+                
+                // Intensity slider
+                this.intensitySlider = document.getElementById('crt-intensity');
+                this.intensityValue = document.getElementById('intensity-value');
+                this.intensitySlider.addEventListener('input', (e) => {
+                    const value = parseFloat(e.target.value);
+                    this.setIntensity(value);
+                    this.intensityValue.textContent = value.toFixed(1);
+                });
+                
+                // Mode selector
+                this.modeSelector = document.getElementById('crt-mode');
+                this.modeSelector.addEventListener('change', (e) => {
+                    this.setMode(e.target.value);
+                });
+            }
+            
+            async initialize() {
+                try {
+                    // Create a basic texture to apply the effect to
+                    const canvasCapture = document.createElement('canvas');
+                    canvasCapture.width = window.innerWidth;
+                    canvasCapture.height = window.innerHeight;
+                    this.captureTexture = new THREE.CanvasTexture(canvasCapture);
+                    this.captureTexture.minFilter = THREE.LinearFilter;
+                    this.captureTexture.magFilter = THREE.LinearFilter;
+                    
+                    // Load shaders
+                    const vertexShader = await this.loadFile('vertex-shader.glsl');
+                    const fragmentShader = await this.loadFile('shaders/crt-shader.glsl');
+                    
+                    // Create shader material
+                    const geometry = new THREE.PlaneGeometry(2, 2);
+                    const material = new THREE.ShaderMaterial({
+                        vertexShader,
+                        fragmentShader,
+                        uniforms: {
+                            iTime: { value: 0 },
+                            iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
+                            iIntensity: { value: this.intensity },
+                            iTexture: { value: this.captureTexture },
+                            iMode: { value: 0 } // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+                        },
+                        transparent: true
+                    });
+                    
+                    // Create mesh with the shader
+                    const mesh = new THREE.Mesh(geometry, material);
+                    this.scene.add(mesh);
+                    
+                    // Store references for animation
+                    this.material = material;
+                    
+                    // Start animation loop
+                    this.animate();
+                    
+                    console.log("CRT overlay initialized successfully!");
+                } catch (error) {
+                    console.error("Error initializing CRT overlay:", error);
+                }
+            }
+            
+            async loadFile(url) {
+                const response = await fetch(url);
+                return await response.text();
+            }
+            
+            handleResize() {
+                const width = window.innerWidth;
+                const height = window.innerHeight;
+                
+                this.renderer.setSize(width, height);
+                
+                if (this.material && this.material.uniforms.iResolution) {
+                    this.material.uniforms.iResolution.value.set(width, height);
+                }
+                
+                // Update capture texture size if needed
+                if (this.captureTexture) {
+                    const context = this.captureTexture.image.getContext('2d');
+                    this.captureTexture.image.width = width;
+                    this.captureTexture.image.height = height;
+                    this.captureTexture.needsUpdate = true;
+                }
+            }
+            
+            animate() {
+                if (!this.enabled) {
+                    requestAnimationFrame(() => this.animate());
+                    return;
+                }
+                
+                // Update time uniform
+                if (this.material) {
+                    this.material.uniforms.iTime.value = this.clock.getElapsedTime();
+                }
+                
+                // Capture the current page as texture
+                this.updateCaptureTexture();
+                
+                // Render the effect
+                this.renderer.render(this.scene, this.camera);
+                
+                // Continue animation loop
+                requestAnimationFrame(() => this.animate());
+            }
+            
+            updateCaptureTexture() {
+                // For performance reasons, we don't actually capture the screen
+                // Instead, we just use the effect directly on top of the page content
+                
+                if (this.material && this.material.uniforms.iIntensity) {
+                    // Apply special effects based on mode
+                    if (this.mode === 'win98') {
+                        // Add a very subtle pulsing for win98 mode
+                        const pulse = Math.sin(this.clock.getElapsedTime() * 0.5) * 0.05;
+                        this.material.uniforms.iIntensity.value = this.intensity + pulse;
+                    }
+                }
+            }
+            
+            toggleEffect() {
+                this.enabled = !this.enabled;
+                
+                const container = document.getElementById('crt-overlay-container');
+                if (this.enabled) {
+                    container.style.display = 'block';
+                    this.toggleButton.textContent = 'ON';
+                } else {
+                    container.style.display = 'none';
+                    this.toggleButton.textContent = 'OFF';
+                }
+            }
+            
+            setIntensity(value) {
+                this.intensity = value;
+                if (this.material && this.material.uniforms.iIntensity) {
+                    this.material.uniforms.iIntensity.value = value;
+                }
+            }
+            
+            setMode(mode) {
+                this.mode = mode;
+                if (this.material && this.material.uniforms.iMode) {
+                    switch(mode) {
+                        case 'crt':
+                            this.material.uniforms.iMode.value = 0;
+                            break;
+                        case 'lcd':
+                            this.material.uniforms.iMode.value = 1;
+                            break;
+                        case 'xp':
+                            this.material.uniforms.iMode.value = 2;
+                            break;
+                        case 'win98':
+                            this.material.uniforms.iMode.value = 3;
+                            break;
+                    }
+                }
+            }
+        }
+        
+        // Initialize the CRT overlay after page load
+        window.addEventListener('load', () => {
+            // Make sure THREE.js is loaded first
+            if (typeof THREE !== 'undefined') {
+                window.crtOverlay = new CRTOverlay();
+            } else {
+                console.error('THREE.js not loaded, cannot initialize CRT effect');
             }
         });
     </script>
