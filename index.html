@@ -4168,6 +4168,15 @@
                                     wmpWindow.style.setProperty('box-sizing', 'border-box', 'important');
                                     wmpWindow.style.setProperty('padding', '0', 'important');
                                     wmpWindow.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
+                                    
+                                    // Apply special style to Spotify iframe when maximized
+                                    const spotifyIframe = document.getElementById('spotify-player');
+                                    if (spotifyIframe) {
+                                        spotifyIframe.style.setProperty('top', '9%', 'important');
+                                        spotifyIframe.style.setProperty('left', '4%', 'important');
+                                        spotifyIframe.style.setProperty('width', '96%', 'important');
+                                        spotifyIframe.style.setProperty('height', 'unset', 'important');
+                                    }
                                 }
                                 
                                 // Trigger resize event to make sure visualizer renders correctly
@@ -4221,6 +4230,15 @@
                             windowElement.style.setProperty('box-sizing', 'border-box', 'important');
                             windowElement.style.setProperty('padding', '0', 'important');
                             windowElement.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
+                            
+                            // Apply special style to Spotify iframe when maximized
+                            const spotifyIframe = document.getElementById('spotify-player');
+                            if (spotifyIframe) {
+                                spotifyIframe.style.setProperty('top', '9%', 'important');
+                                spotifyIframe.style.setProperty('left', '4%', 'important');
+                                spotifyIframe.style.setProperty('width', '96%', 'important');
+                                spotifyIframe.style.setProperty('height', 'unset', 'important');
+                            }
                         }
                     }
                 });
@@ -4605,6 +4623,15 @@
                             wmpWindow.style.setProperty('box-sizing', 'border-box', 'important');
                             wmpWindow.style.setProperty('padding', '0', 'important');
                             wmpWindow.style.setProperty('bottom', `${taskbarHeight}px`, 'important');
+                            
+                            // Apply special style to Spotify iframe when maximized
+                            const spotifyIframe = document.getElementById('spotify-player');
+                            if (spotifyIframe) {
+                                spotifyIframe.style.setProperty('top', '9%', 'important');
+                                spotifyIframe.style.setProperty('left', '4%', 'important');
+                                spotifyIframe.style.setProperty('width', '96%', 'important');
+                                spotifyIframe.style.setProperty('height', 'unset', 'important');
+                            }
                         }
                         
                         // Add visual feedback
