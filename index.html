@@ -37,10 +37,18 @@
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
             transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, transform 0.3s ease;
         }
-        #venerus-window {   
-             height: 105px;
+       
+        @media (max-width: 768px) {
+            #venerus-window {   
+                 height: 117px;
+            }
         }
 
+        @media (min-width: 768px) {
+            #venerus-window {   
+                 height: 117px;
+            }
+        }
 
         /* Compact mode for the window - shows more background */
         .window.compact-mode {
