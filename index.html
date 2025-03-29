@@ -671,7 +671,7 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
+                height: 352px;
                 min-height: 250px;
                 z-index: 5;
             }
@@ -1207,8 +1207,8 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
-                min-height: 380px;
+                height: 352px;
+                min-height: 250px;
                 z-index: 5;
             }
             
@@ -1242,7 +1242,7 @@
             /* Expanded view for mobile */
             @media (max-width: 768px) {
                 .window.maximized .modal-visualizer-container {
-                    height: calc(100vh - 380px) !important;
+                    height: calc(100vh - 250px) !important;
                     min-height: 300px !important;
                     transition: height 0.3s ease;
                     visibility: visible !important;
@@ -1743,7 +1743,7 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
+                height: 352px;
                 min-height: 250px;
                 z-index: 5;
             }
@@ -2279,7 +2279,7 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
+                height: 352px;
                 min-height: 250px;
                 z-index: 5;
             }
@@ -2815,7 +2815,7 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
+                height: 352px;
                 min-height: 250px;
                 z-index: 5;
             }
@@ -3351,8 +3351,8 @@
             
             /* Modal visualizer container for mobile */
             .modal-visualizer-container {
-                height: 380px;
-                min-height: 380px;
+                height: 352px;
+                min-height: 250px;
                 z-index: 5;
             }
             
@@ -3386,7 +3386,7 @@
             /* Expanded view for mobile */
             @media (max-width: 768px) {
                 .window.maximized .modal-visualizer-container {
-                    height: calc(100vh - 380px) !important;
+                    height: calc(100vh - 250px) !important;
                     min-height: 300px !important;
                     transition: height 0.3s ease;
                     visibility: visible !important;
@@ -3570,23 +3570,17 @@
             </div>
         </div>
         <div class="window-body">
-            <div class="player-container" style="position: relative; z-index: 15; height: 152px; width: 100%; background-color: rgb(70 86 78); overflow: hidden; box-sizing: border-box;">
-                <!-- Updated Spotify iframe with more reliable configuration -->
+            <!-- Add secondary canvas visualization inside the window -->
+            <div class="modal-visualizer-container">
                 <iframe id="spotify-player"
-                    style="border-radius:12px; display: block !important; position: relative; z-index: 20; width: 100%; height: 152px; visibility: visible; opacity: 1; background-color: white; background-image: linear-gradient(to bottom, #f5f5f5, #eaeaea);"
+                    style="border-radius:12px; display: block !important; position: absolute; z-index: 0; top: -6%; width: 100%; height: 100%; visibility: visible; opacity: 1; background-color: white; background-image: linear-gradient(to bottom, #f5f5f5, #eaeaea);"
                     src="https://open.spotify.com/embed/track/264hK4WMZsBIpmIhdBXZrh?utm_source=generator&theme=0"
                     frameBorder="0" 
                     allowfullscreen=""
                     allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" 
                     loading="eager">
                 </iframe>
-                <!-- Add an invisible overlay to detect clicks on the iframe which might be play/pause actions -->
-                <div id="spotify-click-detector" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 21; cursor: pointer; opacity: 0; pointer-events: none;"></div>
-            </div>
-            
-            <!-- Add secondary canvas visualization inside the window -->
-            <div class="modal-visualizer-container">
-                <img src="shaders/default.png"  style="width: 100%; height: 100%;  position: absolute; top: 0; left: 0; z-index: 0;">
+                <img src="shaders/default.png"  style="pointer-events: none; width: 100%; height: 100%;  position: absolute; top: 0; left: 0; z-index: 0;">
                 <canvas id="modal-visualizer"></canvas>
                 <div class="visualization-status"></div>
             </div>
@@ -4134,8 +4128,8 @@
                                     // Restore visualizer to normal size
                                     if (modalVisualizerContainer) {
                                         modalVisualizerContainer.style.display = 'block';
-                                            modalVisualizerContainer.style.height = '380px';
-                                            modalVisualizerContainer.style.minHeight = '380px';
+                                        modalVisualizerContainer.style.height = '352px';
+                                        modalVisualizerContainer.style.minHeight = '352px';
                                     }
                                 } else {
                                     // Go to maximized size directly
@@ -4492,7 +4486,7 @@
             // Add visualization button functionality with improved touch support
             const visualizationButton = document.querySelector('.btn-visualization');
             if (visualizationButton) {
-                let visualizationStyle = 0; // Start with low intensity
+                let visualizationStyle = 6; // Start with low intensity
                 const styleLabels = ['Low', 'Medium', 'High'];
                 
                 // Function to handle both click and touch events
@@ -4559,8 +4553,8 @@
                             // Restore visualizer to normal size
                             if (modalVisualizerContainer) {
                                 modalVisualizerContainer.style.display = 'block';
-                                modalVisualizerContainer.style.height = '380px';
-                                modalVisualizerContainer.style.minHeight = '380px';
+                                modalVisualizerContainer.style.height = '352px';
+                                modalVisualizerContainer.style.minHeight = '352px';
                             }
                             
                             // If the window is off-screen, center it
@@ -4584,7 +4578,7 @@
                             // Show the visualizer container
                             if (modalVisualizerContainer) {
                                 if (isMobile) {
-                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 380px)', 'important');
+                                    modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 352px)', 'important');
                                     modalVisualizerContainer.style.setProperty('min-height', '300px', 'important');
                                 } else {
                                     modalVisualizerContainer.style.setProperty('height', 'calc(100vh - 280px)', 'important');
@@ -4670,6 +4664,18 @@
                                 if (isPlaying !== null) {
                                     window.visualizerInstance.updatePlaybackStatus(isPlaying);
                                     window.visualizerInstance.intensity = isPlaying ? 1.0 : 0.5;
+                                    
+                                    // Hide or show the Spotify iframe based on playback status
+                                    const spotifyIframe = document.querySelector('#spotify-player');
+                                    if (spotifyIframe) {
+                                        if (isPlaying) {
+                                            // Hide iframe when playing
+                                            spotifyIframe.style.setProperty('display', 'none', 'important');
+                                        } else {
+                                            // Show iframe when paused
+                                            spotifyIframe.style.setProperty('display', 'block', 'important');
+                                        }
+                                    }
                                 }
                             } catch (e) {
                                 console.warn('Error processing Spotify message:', e);
@@ -4700,6 +4706,18 @@
                                             window.visualizerInstance.updatePlaybackStatus(isPlaying);
                                             window.visualizerInstance.intensity = isPlaying ? 1.0 : 0.5;
                                             console.log('Detected playback change via API:', isPlaying);
+                                            
+                                            // Hide or show the Spotify iframe based on playback status
+                                            const spotifyIframe = document.querySelector('#spotify-player');
+                                            if (spotifyIframe) {
+                                                if (isPlaying) {
+                                                    // Hide iframe when playing
+                                                    spotifyIframe.style.setProperty('display', 'none', 'important');
+                                                } else {
+                                                    // Show iframe when paused
+                                                    spotifyIframe.style.setProperty('display', 'block', 'important');
+                                                }
+                                            }
                                         }
                                     })
                                     .catch(err => {

@@ -11,7 +11,8 @@ class Visualizer {
         });
 
         this.clock = new THREE.Clock();
-        this.intensity = 2;
+        // Set high intensity by default for Bliss visualization
+        this.intensity = 1.5;  // Higher intensity for Bliss from the start
         this.visualizationIntensity = 1.0;
         this.isMobile = this.checkIfMobile();
         
@@ -749,10 +750,10 @@ class Visualizer {
             debugButton.textContent = this.isPlaying ? 'Pause' : 'Play';
         }
         
-        // Update intensity and shader parameters
-        this.intensity = this.isPlaying ? 1.0 : 0.5;
+        // Keep intensity high for Bliss visualizer regardless of play state
+        // this.intensity = this.isPlaying ? 1.0 : 0.5; -- removed to keep high intensity
         
-        // Update modal visualizer if available
+        // Update modal visualizer if available - it will adjust its own intensity
         if (this.modalVisualizer) {
             this.modalVisualizer.updatePlaybackStatus(this.isPlaying);
         }
@@ -1022,15 +1023,21 @@ class Visualizer {
             this.material.uniforms.iTime.value = time;
             
             // Combine base intensity with visualization style intensity
+            // Modified to always show the Bliss visualizer at full intensity
+            // regardless of play state
             const combinedIntensity = this.intensity * this.visualizationIntensity;
             
-            // Add subtle pulsing for more lively visualization, especially when playing
+            // Add subtle pulsing for more lively visualization
             let pulseFactor = 1.0;
             if (this.isPlaying) {
                 // Add a subtle pulsing effect that's more pronounced when playing
                 pulseFactor = 1.0 + 0.2 * Math.sin(time * 3.0);
+            } else {
+                // Still add some subtle movement even when not playing
+                pulseFactor = 1.0 + 0.1 * Math.sin(time * 1.5);
             }
             
+            // Always use high intensity for Bliss visualizer, regardless of play state
             this.material.uniforms.iIntensity.value = combinedIntensity * pulseFactor;
         }
         
@@ -1097,6 +1104,7 @@ class Visualizer {
         const modalCanvas = document.getElementById('modal-visualizer');
         if (modalCanvas) {
             this.modalVisualizer = new ModalVisualizer(modalCanvas, this);
+            // Don't initialize the modal visualizer yet - it will initialize on play
         }
     }
 
@@ -1247,6 +1255,7 @@ class ModalVisualizer {
         
         if (isPlaying) {
             if (!this.isInitialized) {
+                // Only initialize the modal visualizer when play is clicked
                 this.initialize();
             }
             //this.updateStatus('Visualizing');
@@ -1542,8 +1551,8 @@ class ModalVisualizer {
             const time = this.clock.getElapsedTime();
             this.material.uniforms.iTime.value = time;
             
-            // Use the intensity based on play status from main visualizer
-            let intensity = this.isPlaying ? 1.0 : 0.5;
+            // Use the intensity based on play status - WMP visualizer should only be active during playback
+            let intensity = this.isPlaying ? 1.0 : 0.1; // Very low intensity when not playing
             
             // Add pulsing when playing
             if (this.isPlaying) {
