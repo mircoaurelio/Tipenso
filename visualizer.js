@@ -77,7 +77,7 @@ class Visualizer {
         if (this.isMobile) {
             // Center horizontally, position near the top
             windowElement.style.left = '50%';
-            windowElement.style.top = '6%';
+            windowElement.style.top = '15%';
             windowElement.style.transform = 'translateX(-50%)';
             
             // Set appropriate width
