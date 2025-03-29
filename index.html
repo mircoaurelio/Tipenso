@@ -1923,7 +1923,7 @@
             width: 100%;
             position: relative; /* Restore position */
             z-index: 10; /* Restore z-index */
-           
+            
             overflow: hidden;
             box-sizing: border-box;
         }
@@ -4771,7 +4771,7 @@
     </script>
     
     <!-- CRT Shader Overlay -->
-    <div id="crt-overlay-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999999999999999999; opacity: 0.55;">
+    <div id="crt-overlay-container" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 99999999999999999999; opacity: 0;">
         <canvas id="crt-overlay" style="width: 100%; height: 100%;"></canvas>
     </div>
     
@@ -4814,6 +4814,7 @@
                 });
                 
                 this.clock = new THREE.Clock();
+                this.initTime = this.clock.getElapsedTime(); // Store the initialization time
                 this.intensity = 0.4; // Higher intensity for better visibility
                 this.enabled = true;
                 this.mode = 'crt'; // Default mode
@@ -4876,7 +4877,8 @@
                             iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
                             iIntensity: { value: this.intensity },
                             iTexture: { value: this.captureTexture },
-                            iMode: { value: 0 } // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+                            iMode: { value: 0 }, // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+                            iInitTime: { value: 0 } // Initialize time since shader creation
                         },
                         transparent: true
                     });
@@ -4887,6 +4889,9 @@
                     
                     // Store references for animation
                     this.material = material;
+                    
+                    // Show the container (will fade in with shader)
+                    document.getElementById('crt-overlay-container').style.opacity = '0.55';
                     
                     // Start animation loop
                     this.animate();
@@ -4927,9 +4932,11 @@
                     return;
                 }
                 
-                // Update time uniform
+                // Update time uniforms
                 if (this.material) {
-                    this.material.uniforms.iTime.value = this.clock.getElapsedTime();
+                    const currentTime = this.clock.getElapsedTime();
+                    this.material.uniforms.iTime.value = currentTime;
+                    this.material.uniforms.iInitTime.value = currentTime - this.initTime;
                 }
                 
                 // Capture the current page as texture

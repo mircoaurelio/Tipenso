@@ -6,6 +6,7 @@ uniform vec2 iResolution;
 uniform float iIntensity;
 uniform sampler2D iTexture;
 uniform int iMode; // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+uniform float iInitTime; // Time since shader initialization
 
 varying vec2 vUv;
 
@@ -157,20 +158,20 @@ vec2 pixelate(vec2 uv, float pixelSize, int mode) {
     float dy = pixelSize / iResolution.y;
     
     if (mode == 0) { // CRT - more pixelation
-        dx *= 2.0;
-        dy *= 2.0;
+        dx *= 10.0; // Increased from 6.0 for extremely large pixels
+        dy *= 10.0; // Increased from 6.0 for extremely large pixels
     }
     else if (mode == 1) { // LCD - very visible pixelation
-        dx *= 2.5;
-        dy *= 2.5;
+        dx *= 12.0; // Increased from 7.0 for extremely large pixels
+        dy *= 12.0; // Increased from 7.0 for extremely large pixels
     }
     else if (mode == 2) { // XP - slight pixelation
-        dx *= 1.5;
-        dy *= 1.5;
+        dx *= 8.0; // Increased from 4.5 for extremely large pixels
+        dy *= 8.0; // Increased from 4.5 for extremely large pixels
     }
     else if (mode == 3) { // Win98 - strong pixelation
-        dx *= 3.0;
-        dy *= 3.0;
+        dx *= 14.0; // Increased from 8.0 for extremely large pixels
+        dy *= 14.0; // Increased from 8.0 for extremely large pixels
     }
     
     float x = floor(uv.x / dx) * dx;
@@ -184,16 +185,16 @@ vec2 wavyEffect(vec2 uv, float time, int mode) {
     float distStrength = 0.0;
     
     if (mode == 0) { // CRT
-        distStrength = 0.008; // Increased from 0.005
+        distStrength = 0.006; // Slightly reduced from 0.008 to allow pixels to be more visible
     }
     else if (mode == 1) { // LCD
-        distStrength = 0.005; // Increased from 0.003
+        distStrength = 0.004; // Slightly reduced from 0.005
     }
     else if (mode == 2) { // XP
-        distStrength = 0.004; // Increased from 0.002
+        distStrength = 0.003; // Slightly reduced from 0.004
     }
     else if (mode == 3) { // Win98
-        distStrength = 0.01; // Increased from 0.006
+        distStrength = 0.008; // Slightly reduced from 0.01
     }
     
     // Get distance from center for radial wave effect
@@ -310,6 +311,10 @@ float glitchEffect(vec2 uv, float time, int mode) {
 void main() {
     float time = iTime * 0.5;
     
+    // Calculate fade-in effect (smooth transition over 1.5 seconds)
+    float fadeIn = min(iTime / 1.5, 1.0);
+    fadeIn = smoothstep(0.0, 1.0, fadeIn); // Make the fade-in smoother
+    
     // Get the UV coordinates
     vec2 uv = vUv;
     
@@ -319,7 +324,7 @@ void main() {
     // Check if the pixel is still within the screen after curvature (should be minimal now)
     if (curvedUv.x < 0.0 || curvedUv.x > 1.0 || curvedUv.y < 0.0 || curvedUv.y > 1.0) {
         // Black outside the screen
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, fadeIn * iIntensity);
         return;
     }
     
@@ -330,12 +335,12 @@ void main() {
     // Apply the wavy effect instead of just pixelation
     vec2 wavyUv = wavyEffect(curvedUv, time, iMode);
     
-    // We'll still apply some pixelation, but much less than before
-    float pixelReduction = 4.0; // Increased from 3.0 for even less pixelation
-    vec2 pixelatedUv = pixelate(wavyUv, 1.5 / pixelReduction, iMode);
+    // Apply stronger pixelation for bigger, more visible pixels
+    float pixelReduction = 1.0; // Reduced from 1.2 for maximum pixel size
+    vec2 pixelatedUv = pixelate(wavyUv, 3.5 / pixelReduction, iMode); // Increased base pixel size from 2.5 to 3.5
     
-    // Blend between wavy and pixelated for organic feel
-    vec2 finalUv = mix(wavyUv, pixelatedUv, 0.25); // 75% wavy, 25% pixelated (changed from 60/40)
+    // Blend between wavy and pixelated for organic feel with more emphasis on pixels
+    vec2 finalUv = mix(wavyUv, pixelatedUv, 0.85); // 15% wavy, 85% pixelated (increased from 75%)
     
     // Get the base color from the texture
     vec3 color = texture2D(iTexture, finalUv).rgb;
@@ -344,6 +349,17 @@ void main() {
     float waveShift = sin(finalUv.y * 8.0 + time * 0.6) * 0.001; // Small wavy adjustment
     float shiftAmount = 0.004 + 0.002 * sin(time * 0.5) + waveShift;
     color = mix(color, rgbShift(iTexture, finalUv, shiftAmount, iMode), 0.4);
+    
+    // Add pixel edge enhancement for more defined pixels
+    vec2 pixEdge = abs(fract(finalUv * iResolution.xy * 0.05) - 0.5); // Reduced from 0.075 for even larger edges
+    float pixelEdgeFactor = smoothstep(0.2, 0.1, min(pixEdge.x, pixEdge.y)) * 0.2; // Increased from 0.15 for stronger effect
+    color *= 1.0 - pixelEdgeFactor;
+    
+    // Add stronger pixel bloom effect to make pixels more prominent
+    vec2 bloomUv = pixelatedUv;
+    vec3 bloomColor = texture2D(iTexture, bloomUv).rgb;
+    bloomColor = pow(bloomColor, vec3(1.8)); // Brighten highlights (slightly less than before for better balance)
+    color = mix(color, bloomColor, 0.3); // Increased from 0.2 to 0.3 for stronger bloom
     
     // Apply wavy scanlines appropriate for the mode
     color *= scanline(finalUv, time, iMode);
@@ -382,6 +398,6 @@ void main() {
         color = mix(color, color * vec3(1.3, 0.8, 0.8), colorBar * 0.3);
     }
     
-    // Output the final color
-    gl_FragColor = vec4(color, iIntensity);
+    // Apply the fade-in effect to the final color
+    gl_FragColor = vec4(color, fadeIn * iIntensity);
 } 
