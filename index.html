@@ -1923,7 +1923,7 @@
             width: 100%;
             position: relative; /* Restore position */
             z-index: 10; /* Restore z-index */
-           
+            
             overflow: hidden;
             box-sizing: border-box;
         }
@@ -3583,6 +3583,11 @@
                 <img src="shaders/default.png"  style="pointer-events: none; width: 100%; height: 100%;  position: absolute; top: 0; left: 0; z-index: 0;">
                 <canvas id="modal-visualizer"></canvas>
                 <div class="visualization-status"></div>
+                <!-- Windows XP Style Share Button (Initially Hidden) -->
+                <button id="share-song-button" class="xp-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: none; cursor: pointer; font-family: 'Tahoma', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                    <img src="https://win98icons.alexmeub.com/icons/png/windows-update-4.png" alt="Share" style="width: 16px; height: 16px; margin-right: 4px;">
+                    Condividi questa canzone
+                </button>
             </div>
             
             <div class="controls">
@@ -3775,6 +3780,7 @@
             // Set up share functionality
             const shareButton = document.getElementById('share-button');
             const taskbarShareButton = document.getElementById('taskbar-share-button');
+            const shareSongButton = document.getElementById('share-song-button');
             
             function handleShare() {
                 // Get the current URL
@@ -3850,7 +3856,7 @@
                 }
             }
             
-            // Add event listeners to share button
+            // Add event listeners to share buttons
             if (shareButton) {
                 // Use both click and touchend to ensure good mobile experience
                 shareButton.addEventListener('click', handleShare);
@@ -3888,6 +3894,142 @@
                 taskbarShareButton.addEventListener('touchend', () => {
                     taskbarShareButton.classList.remove('active');
                 });
+            }
+            
+            // Connect the song share button to the same functionality
+            if (shareSongButton) {
+                shareSongButton.addEventListener('click', handleShare);
+                shareSongButton.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    handleShare();
+                });
+                
+                // Add Windows XP button hover effect
+                shareSongButton.addEventListener('mouseover', () => {
+                    shareSongButton.style.background = 'linear-gradient(to bottom, #f0f0e8, #e0dfd8)';
+                });
+                
+                shareSongButton.addEventListener('mouseout', () => {
+                    shareSongButton.style.background = 'linear-gradient(to bottom, #ebeadb, #cfd0c8)';
+                });
+                
+                shareSongButton.addEventListener('mousedown', () => {
+                    shareSongButton.style.background = 'linear-gradient(to bottom, #cfd0c8, #ebeadb)';
+                    shareSongButton.style.transform = 'translateY(1px)';
+                });
+                
+                shareSongButton.addEventListener('mouseup', () => {
+                    shareSongButton.style.background = 'linear-gradient(to bottom, #ebeadb, #cfd0c8)';
+                    shareSongButton.style.transform = 'translateY(0)';
+                });
+            }
+            
+            // Show the share song button after 30 seconds of playing
+            let shareSongButtonTimer;
+            const toggleButton = document.getElementById('toggle-button');
+            const playbackStatus = document.getElementById('playback-status');
+            
+            if (toggleButton && shareSongButton) {
+                // First, set up the click handler for the toggle button
+                toggleButton.addEventListener('click', function() {
+                    const isPlaying = toggleButton.textContent === 'Pause';
+                    
+                    if (isPlaying) {
+                        // Start the 30-second timer when music is playing
+                        startShareButtonTimer();
+                    } else {
+                        // Clear the timer if music is paused
+                        clearTimeout(shareSongButtonTimer);
+                        // Hide the button if it was visible
+                        shareSongButton.style.display = 'none';
+                    }
+                });
+                
+                // Also monitor the playback status element for changes
+                const observer = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' || mutation.type === 'childList') {
+                            const isPlaying = playbackStatus.textContent === 'Playing' || 
+                                            playbackStatus.classList.contains('status-playing') ||
+                                            !playbackStatus.classList.contains('status-paused');
+                            
+                            if (isPlaying && shareSongButton.style.display === 'none') {
+                                startShareButtonTimer();
+                            } else if (!isPlaying) {
+                                clearTimeout(shareSongButtonTimer);
+                                shareSongButton.style.display = 'none';
+                            }
+                        }
+                    });
+                });
+                
+                // Observe both class changes and content changes
+                observer.observe(playbackStatus, { 
+                    attributes: true, 
+                    childList: true,
+                    attributeFilter: ['class']
+                });
+                
+                // Function to start the timer and show the button
+                function startShareButtonTimer() {
+                    clearTimeout(shareSongButtonTimer); // Clear any existing timer
+                    
+                    // Set timeout to 30 seconds
+                    const timeout = 30000; // 30 seconds
+                    
+                    console.log('Starting share button timer...');
+                    
+                    shareSongButtonTimer = setTimeout(() => {
+                        console.log('Share button timer triggered!');
+                        shareSongButton.style.display = 'block';
+                        // Add a fade-in animation
+                        shareSongButton.style.opacity = '0';
+                        shareSongButton.style.transition = 'opacity 0.5s ease-in';
+                        setTimeout(() => {
+                            shareSongButton.style.opacity = '1';
+                        }, 10);
+                    }, timeout);
+                }
+                
+                // Check with Spotify controller directly after it's available
+                if (window.visualizerInstance && window.visualizerInstance.spotifyController) {
+                    checkSpotifyPlaybackState();
+                } else {
+                    // Wait for the Spotify controller to be created
+                    const checkSpotifyController = setInterval(() => {
+                        if (window.visualizerInstance && window.visualizerInstance.spotifyController) {
+                            clearInterval(checkSpotifyController);
+                            checkSpotifyPlaybackState();
+                        }
+                    }, 1000);
+                }
+                
+                // Function to check Spotify playback state directly
+                function checkSpotifyPlaybackState() {
+                    if (window.visualizerInstance && window.visualizerInstance.spotifyController) {
+                        window.visualizerInstance.spotifyController.getPlaybackState().then(state => {
+                            if (state && state.playing && shareSongButton.style.display === 'none') {
+                                console.log('Spotify is playing via controller check');
+                                startShareButtonTimer();
+                            }
+                        }).catch(err => console.error('Error getting playback state:', err));
+                        
+                        // Set up periodic checking of playback state
+                        setInterval(() => {
+                            if (window.visualizerInstance && window.visualizerInstance.spotifyController) {
+                                window.visualizerInstance.spotifyController.getPlaybackState().then(state => {
+                                    if (state && state.playing && shareSongButton.style.display === 'none') {
+                                        console.log('Spotify is playing via interval check');
+                                        startShareButtonTimer();
+                                    } else if (state && !state.playing) {
+                                        clearTimeout(shareSongButtonTimer);
+                                        shareSongButton.style.display = 'none';
+                                    }
+                                }).catch(err => {});
+                            }
+                        }, 5000); // Check every 5 seconds
+                    }
+                }
             }
             
             // Check if iframe is already loaded (might happen with cached pages)
@@ -4866,6 +5008,9 @@
                     const vertexShader = await this.loadFile('vertex-shader.glsl');
                     const fragmentShader = await this.loadFile('shaders/crt-shader.glsl');
                     
+                    // Record start time for fade-in effect
+                    this.startTime = this.clock.getElapsedTime();
+                    
                     // Create shader material
                     const geometry = new THREE.PlaneGeometry(2, 2);
                     const material = new THREE.ShaderMaterial({
@@ -4876,7 +5021,8 @@
                             iResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
                             iIntensity: { value: this.intensity },
                             iTexture: { value: this.captureTexture },
-                            iMode: { value: 0 } // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+                            iMode: { value: 0 }, // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+                            iStartTime: { value: this.startTime } // Add start time for fade-in effect
                         },
                         transparent: true
                     });
@@ -4963,6 +5109,12 @@
                 if (this.enabled) {
                     container.style.display = 'block';
                     this.toggleButton.textContent = 'ON';
+                    
+                    // Reset start time to create fade-in effect when toggled back on
+                    this.startTime = this.clock.getElapsedTime();
+                    if (this.material && this.material.uniforms.iStartTime) {
+                        this.material.uniforms.iStartTime.value = this.startTime;
+                    }
                 } else {
                     container.style.display = 'none';
                     this.toggleButton.textContent = 'OFF';

@@ -6,6 +6,7 @@ uniform vec2 iResolution;
 uniform float iIntensity;
 uniform sampler2D iTexture;
 uniform int iMode; // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
+uniform float iStartTime; // Time when the shader was initialized for fade-in effect
 
 varying vec2 vUv;
 
@@ -160,12 +161,12 @@ vec2 pixelate(vec2 uv, float pixelSize, int mode) {
     float dy = (pixelSize * baseSizeMultiplier) / iResolution.y;
     
     if (mode == 0) { // CRT - more pixelation
-        dx *= 2.5; // Increased from 2.0
-        dy *= 2.5; // Increased from 2.0
+        dx *= 6.5; // Increased from 2.0
+        dy *= 6.5; // Increased from 2.0
     }
     else if (mode == 1) { // LCD - very visible pixelation
-        dx *= 3.0; // Increased from 2.5
-        dy *= 3.0; // Increased from 2.5
+        dx *= 9.0; // Increased from 2.5
+        dy *= 9.0; // Increased from 2.5
     }
     else if (mode == 2) { // XP - slight pixelation
         dx *= 2.0; // Increased from 1.5
@@ -317,6 +318,11 @@ float glitchEffect(vec2 uv, float time, int mode) {
 void main() {
     float time = iTime * 0.5;
     
+    // Calculate fade-in factor (0 to 1 over 1.5 seconds)
+    float fadeInDuration = 1.5; // fade in duration in seconds
+    float timeSinceStart = max(0.0, iTime - iStartTime);
+    float fadeInFactor = min(1.0, timeSinceStart / fadeInDuration);
+    
     // Get the UV coordinates
     vec2 uv = vUv;
     
@@ -326,7 +332,7 @@ void main() {
     // Check if the pixel is still within the screen after curvature (should be minimal now)
     if (curvedUv.x < 0.0 || curvedUv.x > 1.0 || curvedUv.y < 0.0 || curvedUv.y > 1.0) {
         // Black outside the screen
-        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0 * fadeInFactor);
         return;
     }
     
@@ -391,6 +397,6 @@ void main() {
         color = mix(color, color * vec3(1.3, 0.8, 0.8), colorBar * 0.3);
     }
     
-    // Output the final color
-    gl_FragColor = vec4(color, iIntensity);
+    // Output the final color with fade-in effect applied
+    gl_FragColor = vec4(color, iIntensity * fadeInFactor);
 } 
