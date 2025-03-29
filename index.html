@@ -37,7 +37,11 @@
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
             transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, transform 0.3s ease;
         }
-        
+        #venerus-window {   
+             height: 105px;
+        }
+
+
         /* Compact mode for the window - shows more background */
         .window.compact-mode {
             background: rgba(236, 233, 216, 0.85);
@@ -488,8 +492,7 @@
         
         @media (max-width: 768px) {
             .taskbar {
-                height: 50px; /* Slightly reduced height */
-                padding: 0 2px;
+                height: 46px; /* Slightly reduced height */
                 width: 100%; /* Ensure full width */
                 left: 0;
                 right: 0;
@@ -500,7 +503,7 @@
                 min-width: 70px; /* Smaller width */
                 padding: 1px 5px;
                 font-size: 14px;
-                margin: 0 3px 0 1px;
+            
             }
             
             .start-button img {
@@ -790,7 +793,6 @@
         @media (orientation: landscape) and (max-height: 500px) {
             .taskbar {
                 height: 38px; /* Even smaller in landscape */
-                padding: 0 2px;
             }
             
             .window {
@@ -1326,7 +1328,6 @@
         @media (orientation: landscape) and (max-height: 500px) {
             .taskbar {
                 height: 38px; /* Even smaller in landscape */
-                padding: 0 2px;
             }
             
             .window {
@@ -1862,7 +1863,6 @@
         @media (orientation: landscape) and (max-height: 500px) {
             .taskbar {
                 height: 38px; /* Even smaller in landscape */
-                padding: 0 2px;
             }
             
             .window {
@@ -2398,7 +2398,6 @@
         @media (orientation: landscape) and (max-height: 500px) {
             .taskbar {
                 height: 38px; /* Even smaller in landscape */
-                padding: 0 2px;
             }
             
             .window {
@@ -3039,10 +3038,121 @@
             display: flex !important;
             flex-direction: column !important;
         }
+
+        .desktop-mode .sharing-toolbar {
+            flex-direction: column !important;
+        }
+
+        /* Desktop Area and Icons Styling */
+        .desktop-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: calc(100vh - 40px); /* Leave space for taskbar */
+            z-index: 1; /* Above visualizer but below windows */
+            pointer-events: auto;
+            overflow: hidden;
+        }
+
+        /* Desktop Icon Styling - Windows XP Style */
+        .desktop-icon {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 70px;
+            height: 90px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            cursor: pointer;
+            text-align: center;
+            padding: 5px;
+            border-radius: 5px;
+            transition: background-color 0.1s ease;
+        }
+
+        .desktop-icon:hover {
+            background-color: rgba(49, 106, 197, 0.1);
+        }
+
+        .desktop-icon:active {
+            background-color: rgba(49, 106, 197, 0.3);
+        }
+
+        .desktop-icon img {
+            width: 42px;
+            height: 42px;
+            margin-bottom: 5px;
+            filter: drop-shadow(1px 1px 1px rgba(0, 0, 0, 0.3));
+        }
+
+        .desktop-icon .icon-label {
+            color: white;
+            font-family: 'Tahoma', sans-serif;
+            font-size: 11px;
+            text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.7);
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: normal;
+            word-wrap: break-word;
+            text-align: center;
+            line-height: 1.2;
+            padding: 2px 4px;
+            border-radius: 2px;
+        }
+
+        .desktop-icon.selected {
+            background-color: rgba(49, 106, 197, 0.3);
+        }
+
+        .desktop-icon.selected .icon-label {
+            background-color: #316AC5;
+        }
+
+        /* Mobile Responsiveness for Desktop Icons */
+        @media (max-width: 768px) {
+            .desktop-icon {
+                width: 60px;
+                height: 80px;
+            }
+
+            .desktop-icon img {
+                width: 36px;
+                height: 36px;
+            }
+
+            .desktop-icon .icon-label {
+                font-size: 10px;
+            }
+        }
     </style>
 </head>
 <body>
     <canvas id="visualizer"></canvas>
+    
+    <!-- Desktop Area -->
+    <div class="desktop-area">
+        <!-- Windows XP Trash Icon -->
+        <div class="desktop-icon" id="trash-icon">
+            <img src="https://win98icons.alexmeub.com/icons/png/recycle_bin_empty-5.png" alt="Recycle Bin">
+            <span class="icon-label">Recycle Bin</span>
+        </div>
+        
+        <!-- Explorer Icon -->
+        <div class="desktop-icon" id="explorer-icon" style="top: 120px;">
+            <img src="https://win98icons.alexmeub.com/icons/png/msie1-0.png" alt="Internet Explorer">
+            <span class="icon-label">Vibes Explorer</span>
+        </div>
+        
+        <!-- Spotify Icon -->
+        <div class="desktop-icon" id="spotify-icon" style="top: 220px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/240px-Spotify_logo_without_text.svg.png" alt="Spotify">
+            <span class="icon-label">Venerus Spotify</span>
+        </div>
+    </div>
     
     <div class="window" id="wmp-window">
         <div class="title-bar">
@@ -3588,13 +3698,23 @@
             const checkIframeReadiness = setInterval(() => {
                 readinessCheckCount++;
                 
-                const iframeDoc = spotifyIframe.contentDocument || 
-                                 (spotifyIframe.contentWindow && spotifyIframe.contentWindow.document);
-                                 
-                // If we can see iframe content, it's probably ready
-                if (iframeDoc || readinessCheckCount > 20) {
-                    completeLoading();
-                    clearInterval(checkIframeReadiness);
+                try {
+                    // This part can throw security errors when running locally
+                    const iframeDoc = spotifyIframe.contentDocument || 
+                                    (spotifyIframe.contentWindow && spotifyIframe.contentWindow.document);
+                                    
+                    // If we can see iframe content, it's probably ready
+                    if (iframeDoc) {
+                        completeLoading();
+                        clearInterval(checkIframeReadiness);
+                    }
+                } catch (securityError) {
+                    console.warn('Security restriction accessing iframe - this is normal when running locally');
+                    // Still mark as complete after enough attempts
+                    if (readinessCheckCount > 10) {
+                        completeLoading();
+                        clearInterval(checkIframeReadiness);
+                    }
                 }
             }, 500); // Check every 500ms
             
@@ -4429,6 +4549,122 @@
                     clearInterval(spotifyCheckInterval);
                 });
             }
+
+            // Function to update the time display in the taskbar
+            function updateTime() {
+                const now = new Date();
+                
+                // Update time display in 12-hour format with AM/PM
+                let hours = now.getHours();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // The hour '0' should be '12'
+                
+                const minutes = now.getMinutes().toString().padStart(2, '0');
+                const timeDisplay = document.querySelector('.time-display');
+                if (timeDisplay) {
+                    timeDisplay.textContent = `${hours}:${minutes} ${ampm}`;
+                }
+                
+                // Update date display
+                const options = { weekday: 'short', month: 'short', day: 'numeric' };
+                const dateStr = now.toLocaleDateString('en-US', options);
+                const dateDisplay = document.querySelector('.date-display');
+                if (dateDisplay) {
+                    dateDisplay.textContent = dateStr;
+                }
+            }
+
+            // Call updateTime function once to initialize
+            updateTime();
+            
+            // Update time every second
+            setInterval(updateTime, 1000);
+
+            // Desktop icons functionality
+            const desktopIcons = document.querySelectorAll('.desktop-icon');
+            let selectedIcon = null;
+
+            // Add functionality to desktop icons
+            desktopIcons.forEach(icon => {
+                // Handle icon click for opening windows and selection
+                icon.addEventListener('click', function(e) {
+                    // For trash icon - show a recycle bin window
+                    if (icon.id === 'trash-icon') {
+                        // Create a simple Windows XP style alert
+                        alert('The Recycle Bin is empty.');
+                    }
+                    // For explorer icon - open the IE window
+                    else if (icon.id === 'explorer-icon') {
+                        const ieWindow = document.getElementById('ie-window');
+                        // Show the window if hidden
+                        if (ieWindow.style.display === 'none') {
+                            ieWindow.style.display = 'block';
+                        }
+                        // Restore from minimized state if needed
+                        if (ieWindow.classList.contains('minimized')) {
+                            ieWindow.classList.remove('minimized');
+                        }
+                        // Bring to front
+                        windowElements.forEach(w => {
+                            if (w !== ieWindow) {
+                                w.style.zIndex = 1;
+                            }
+                        });
+                        ieWindow.style.zIndex = 2;
+                        updateTaskbarButtons();
+                    }
+                    // For spotify icon - open the Venerus window
+                    else if (icon.id === 'spotify-icon') {
+                        const venerusWindow = document.getElementById('venerus-window');
+                        // Show the window if hidden
+                        if (venerusWindow.style.display === 'none') {
+                            venerusWindow.style.display = 'block';
+                        }
+                        // Restore from minimized state if needed
+                        if (venerusWindow.classList.contains('minimized')) {
+                            venerusWindow.classList.remove('minimized');
+                        }
+                        // Bring to front
+                        windowElements.forEach(w => {
+                            if (w !== venerusWindow) {
+                                w.style.zIndex = 1;
+                            }
+                        });
+                        venerusWindow.style.zIndex = 2;
+                        updateTaskbarButtons();
+                    }
+                    
+                    // Visual selection feedback (highlight)
+                    // Deselect previously selected icon
+                    if (selectedIcon && selectedIcon !== icon) {
+                        selectedIcon.classList.remove('selected');
+                    }
+                    
+                    // Select current icon
+                    icon.classList.add('selected');
+                    selectedIcon = icon;
+                    
+                    // Deselect after a short delay to provide visual feedback
+                    setTimeout(() => {
+                        icon.classList.remove('selected');
+                        selectedIcon = null;
+                    }, 300);
+                });
+
+                // Remove the double click handler since we're using single click now
+            });
+
+            // Click on desktop clears icon selection
+            document.querySelector('.desktop-area').addEventListener('click', function(e) {
+                // Only clear if the click is directly on the desktop area, not on an icon
+                if (e.target === this) {
+                    desktopIcons.forEach(icon => {
+                        icon.classList.remove('selected');
+                    });
+                    selectedIcon = null;
+                }
+            });
         });
     </script>
     
