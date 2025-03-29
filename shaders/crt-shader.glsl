@@ -14,31 +14,39 @@ float scanline(vec2 uv, float time, int mode) {
     float scanlines;
     
     if (mode == 0) { // CRT
-        // More pronounced horizontal scanlines for CRT look
-        scanlines = 0.5 + 0.5 * sin(uv.y * iResolution.y * 1.2 - time * 3.0);
+        // Create wavy scanlines instead of straight ones
+        float wavyOffset = sin(uv.x * 10.0 + time * 0.5) * 0.05;
+        // More pronounced horizontal scanlines for CRT look with wavy pattern
+        scanlines = 0.5 + 0.5 * sin((uv.y + wavyOffset) * iResolution.y * 1.2 - time * 3.0);
         // Emphasize scanlines to make them more visible - "bad screen" effect
         scanlines = pow(scanlines, 1.3) * 0.2 + 0.8;
         
-        // Add refresh line effect (horizontal moving line) - more obvious
-        float refreshLine = smoothstep(0.0, 0.2, abs(fract(uv.y - time * 0.5) - 0.5) - 0.25);
+        // Add refresh line effect (horizontal moving line) - more obvious and wavy
+        float refreshWave = sin(uv.x * 8.0) * 0.03;
+        float refreshLine = smoothstep(0.0, 0.2, abs(fract(uv.y + refreshWave - time * 0.5) - 0.5) - 0.25);
         scanlines *= refreshLine * 0.95 + 0.05;
     } 
     else if (mode == 1) { // LCD
-        // Early LCD has a visible pixel grid - more pronounced
-        float gridX = smoothstep(0.3, 0.7, fract(uv.x * iResolution.x * 0.3));
-        float gridY = smoothstep(0.3, 0.7, fract(uv.y * iResolution.y * 0.3));
+        // Early LCD has a visible pixel grid - more pronounced and slightly wavy
+        float gridWaveX = sin(uv.y * 5.0 + time * 0.3) * 0.02;
+        float gridWaveY = cos(uv.x * 5.0 + time * 0.3) * 0.02;
+        float gridX = smoothstep(0.3, 0.7, fract((uv.x + gridWaveX) * iResolution.x * 0.3));
+        float gridY = smoothstep(0.3, 0.7, fract((uv.y + gridWaveY) * iResolution.y * 0.3));
         scanlines = gridX * 0.08 + gridY * 0.08 + 0.84;
     }
     else if (mode == 2) { // Windows XP
-        // More visible screen artifacts
-        scanlines = 0.94 + 0.06 * sin(uv.y * iResolution.y * 0.7);
+        // More visible screen artifacts with slight wave
+        float xpWave = sin(uv.x * 3.0 + time * 0.2) * 0.01;
+        scanlines = 0.94 + 0.06 * sin((uv.y + xpWave) * iResolution.y * 0.7);
     }
     else if (mode == 3) { // Windows 98
-        // More aggressive scanlines with pixel grid
-        scanlines = 0.65 + 0.35 * sin(uv.y * iResolution.y * 0.8 - time * 2.0);
+        // More aggressive scanlines with pixel grid and wave pattern
+        float win98Wave = sin(uv.x * 4.0 + time * 0.3) * cos(uv.y * 2.0 + time * 0.2) * 0.03;
+        scanlines = 0.65 + 0.35 * sin((uv.y + win98Wave) * iResolution.y * 0.8 - time * 2.0);
         scanlines = pow(scanlines, 1.1) * 0.25 + 0.75;
-        // Add subtle grid
-        float gridX = smoothstep(0.4, 0.6, fract(uv.x * iResolution.x * 0.25));
+        // Add subtle wavy grid
+        float gridWave = cos(uv.y * 3.0 + time * 0.25) * 0.02;
+        float gridX = smoothstep(0.4, 0.6, fract((uv.x + gridWave) * iResolution.x * 0.25));
         scanlines *= 0.93 + gridX * 0.07;
     }
     
@@ -170,6 +178,55 @@ vec2 pixelate(vec2 uv, float pixelSize, int mode) {
     return vec2(x, y);
 }
 
+// New function for wavy, flowing effect instead of dots
+vec2 wavyEffect(vec2 uv, float time, int mode) {
+    // Base distortion strength varies by mode
+    float distStrength = 0.0;
+    
+    if (mode == 0) { // CRT
+        distStrength = 0.008; // Increased from 0.005
+    }
+    else if (mode == 1) { // LCD
+        distStrength = 0.005; // Increased from 0.003
+    }
+    else if (mode == 2) { // XP
+        distStrength = 0.004; // Increased from 0.002
+    }
+    else if (mode == 3) { // Win98
+        distStrength = 0.01; // Increased from 0.006
+    }
+    
+    // Get distance from center for radial wave effect
+    vec2 center = vec2(0.5, 0.5);
+    float dist = length(uv - center);
+    
+    // Create flowing wave patterns
+    float wavyX = sin(uv.y * 15.0 + time * 0.7) * cos(uv.x * 10.0 + time * 0.5) * distStrength;
+    float wavyY = cos(uv.x * 12.0 + time * 0.6) * sin(uv.y * 8.0 + time * 0.4) * distStrength;
+    
+    // Add secondary wave pattern for more organic feel
+    wavyX += sin(uv.y * 7.0 - time * 0.3) * sin(uv.x * 5.0 + time * 0.2) * distStrength * 0.7;
+    wavyY += cos(uv.x * 6.0 - time * 0.4) * cos(uv.y * 4.0 - time * 0.3) * distStrength * 0.7;
+    
+    // Add radial ripple effect
+    float ripple = sin(dist * 30.0 - time * 1.5) * distStrength * 0.5;
+    wavyX += ripple * (uv.x - center.x) / (dist + 0.01);
+    wavyY += ripple * (uv.y - center.y) / (dist + 0.01);
+    
+    // Add slow-moving larger waves for more natural feel
+    wavyX += sin(uv.y * 3.0 + time * 0.2) * cos(uv.x * 2.0 + time * 0.1) * distStrength * 1.2;
+    wavyY += cos(uv.x * 2.5 + time * 0.15) * sin(uv.y * 3.5 + time * 0.25) * distStrength * 1.2;
+    
+    // Add some swirly motion
+    float swirl = sin(dist * 10.0 - time) * distStrength * 0.3;
+    float angle = atan(uv.y - center.y, uv.x - center.x);
+    wavyX += swirl * sin(angle * 2.0 + time * 0.3);
+    wavyY += swirl * cos(angle * 2.0 + time * 0.3);
+    
+    // Apply the distortion
+    return vec2(uv.x + wavyX, uv.y + wavyY);
+}
+
 // Add static/noise like an old display - much more visible
 float noise(vec2 uv, float time, int mode) {
     float noise = fract(sin(dot(uv, vec2(12.9898, 78.233)) * 43758.5453 + time));
@@ -270,18 +327,26 @@ void main() {
     float glitchAmount = glitchEffect(curvedUv, time, iMode);
     curvedUv.x += glitchAmount;
     
-    // Apply appropriate pixelation for the mode
-    vec2 pixelatedUv = pixelate(curvedUv, 1.5, iMode);
+    // Apply the wavy effect instead of just pixelation
+    vec2 wavyUv = wavyEffect(curvedUv, time, iMode);
+    
+    // We'll still apply some pixelation, but much less than before
+    float pixelReduction = 4.0; // Increased from 3.0 for even less pixelation
+    vec2 pixelatedUv = pixelate(wavyUv, 1.5 / pixelReduction, iMode);
+    
+    // Blend between wavy and pixelated for organic feel
+    vec2 finalUv = mix(wavyUv, pixelatedUv, 0.25); // 75% wavy, 25% pixelated (changed from 60/40)
     
     // Get the base color from the texture
-    vec3 color = texture2D(iTexture, pixelatedUv).rgb;
+    vec3 color = texture2D(iTexture, finalUv).rgb;
     
-    // Apply RGB shift based on mode - more pronounced
-    float shiftAmount = 0.004 + 0.002 * sin(time * 0.5);
-    color = mix(color, rgbShift(iTexture, pixelatedUv, shiftAmount, iMode), 0.4);
+    // Apply RGB shift based on mode - more pronounced and wavy
+    float waveShift = sin(finalUv.y * 8.0 + time * 0.6) * 0.001; // Small wavy adjustment
+    float shiftAmount = 0.004 + 0.002 * sin(time * 0.5) + waveShift;
+    color = mix(color, rgbShift(iTexture, finalUv, shiftAmount, iMode), 0.4);
     
-    // Apply scanlines appropriate for the mode
-    color *= scanline(pixelatedUv, time, iMode);
+    // Apply wavy scanlines appropriate for the mode
+    color *= scanline(finalUv, time, iMode);
     
     // Apply screen flicker based on mode
     color *= screenFlicker(time, iMode);
@@ -289,11 +354,17 @@ void main() {
     // Apply vignette based on mode (much reduced)
     color *= vignette(curvedUv, iMode);
     
-    // Add noise/static based on mode (much more visible)
-    color += noise(pixelatedUv, time, iMode);
+    // Add noise/static based on mode with wavy variation
+    float noiseWave = sin(finalUv.x * 6.0 + finalUv.y * 6.0 + time * 0.2) * 0.2;
+    color += noise(finalUv, time + noiseWave, iMode);
     
-    // Apply color grading based on mode
+    // Apply color grading based on mode with slight wave effect
     color = colorGrading(color, iMode);
+    vec2 center = vec2(0.5, 0.5);
+    float dist = length(finalUv - center);
+    float colorWave = sin(dist * 15.0 - time * 0.7) * 0.05;
+    // Add subtle color pulsing from center
+    color *= 1.0 + colorWave * (1.0 - dist * 2.0);
     
     // Apply very strong brightness boost (1.3x brighter)
     color *= 1.3;
@@ -302,7 +373,7 @@ void main() {
     if ((iMode == 0 || iMode == 3) && sin(time * 0.37) > 0.96) {
         float syncShift = 0.03 * sin(time * 10.0);
         // Horizontal shift
-        color = texture2D(iTexture, vec2(pixelatedUv.x + syncShift, pixelatedUv.y)).rgb;
+        color = texture2D(iTexture, vec2(finalUv.x + syncShift, finalUv.y)).rgb;
     }
     
     // Occasional horizontal color bars (bad signal)
