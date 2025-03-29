@@ -6,7 +6,6 @@ uniform vec2 iResolution;
 uniform float iIntensity;
 uniform sampler2D iTexture;
 uniform int iMode; // 0 = CRT, 1 = LCD, 2 = XP, 3 = Win98
-uniform float iInitTime; // Time since shader initialization
 
 varying vec2 vUv;
 
@@ -154,24 +153,27 @@ vec2 crtCurvature(vec2 uv, int mode) {
 
 // Pixelate the screen like a low resolution display
 vec2 pixelate(vec2 uv, float pixelSize, int mode) {
-    float dx = pixelSize / iResolution.x;
-    float dy = pixelSize / iResolution.y;
+    // Increase base pixelation size for more visible effect on mobile
+    float baseSizeMultiplier = 1.8; // Was implicitly 1.0
+    
+    float dx = (pixelSize * baseSizeMultiplier) / iResolution.x;
+    float dy = (pixelSize * baseSizeMultiplier) / iResolution.y;
     
     if (mode == 0) { // CRT - more pixelation
-        dx *= 10.0; // Increased from 6.0 for extremely large pixels
-        dy *= 10.0; // Increased from 6.0 for extremely large pixels
+        dx *= 2.5; // Increased from 2.0
+        dy *= 2.5; // Increased from 2.0
     }
     else if (mode == 1) { // LCD - very visible pixelation
-        dx *= 12.0; // Increased from 7.0 for extremely large pixels
-        dy *= 12.0; // Increased from 7.0 for extremely large pixels
+        dx *= 3.0; // Increased from 2.5
+        dy *= 3.0; // Increased from 2.5
     }
     else if (mode == 2) { // XP - slight pixelation
-        dx *= 8.0; // Increased from 4.5 for extremely large pixels
-        dy *= 8.0; // Increased from 4.5 for extremely large pixels
+        dx *= 2.0; // Increased from 1.5
+        dy *= 2.0; // Increased from 1.5
     }
     else if (mode == 3) { // Win98 - strong pixelation
-        dx *= 14.0; // Increased from 8.0 for extremely large pixels
-        dy *= 14.0; // Increased from 8.0 for extremely large pixels
+        dx *= 3.5; // Increased from 3.0
+        dy *= 3.5; // Increased from 3.0
     }
     
     float x = floor(uv.x / dx) * dx;
@@ -185,16 +187,16 @@ vec2 wavyEffect(vec2 uv, float time, int mode) {
     float distStrength = 0.0;
     
     if (mode == 0) { // CRT
-        distStrength = 0.006; // Slightly reduced from 0.008 to allow pixels to be more visible
+        distStrength = 0.008; // Increased from 0.005
     }
     else if (mode == 1) { // LCD
-        distStrength = 0.004; // Slightly reduced from 0.005
+        distStrength = 0.005; // Increased from 0.003
     }
     else if (mode == 2) { // XP
-        distStrength = 0.003; // Slightly reduced from 0.004
+        distStrength = 0.004; // Increased from 0.002
     }
     else if (mode == 3) { // Win98
-        distStrength = 0.008; // Slightly reduced from 0.01
+        distStrength = 0.01; // Increased from 0.006
     }
     
     // Get distance from center for radial wave effect
@@ -230,28 +232,32 @@ vec2 wavyEffect(vec2 uv, float time, int mode) {
 
 // Add static/noise like an old display - much more visible
 float noise(vec2 uv, float time, int mode) {
-    float noise = fract(sin(dot(uv, vec2(12.9898, 78.233)) * 43758.5453 + time));
+    // Reduce frequency for larger noise dots (scaled down coordinates)
+    // This makes each "grain" of noise larger and more visible on mobile
+    vec2 scaledUV = uv * 0.5; // Scale down to create larger noise patterns
+    
+    float noise = fract(sin(dot(scaledUV, vec2(12.9898, 78.233)) * 43758.5453 + time));
     
     if (mode == 0) { // CRT - much more noticeable noise
-        // Add static interference - more frequent
-        float interference = step(0.94, noise); 
-        return (noise * 0.06) + (interference * 0.15);
+        // Add static interference - more frequent and larger
+        float interference = step(0.92, noise); // Lower threshold for more interference (was 0.94)
+        return (noise * 0.09) + (interference * 0.2); // Increased intensity (was 0.06 and 0.15)
     }
     else if (mode == 1) { // LCD - more visible noise
-        float interference = step(0.96, noise);
-        return (noise * 0.03) + (interference * 0.08);
+        float interference = step(0.94, noise); // Was 0.96
+        return (noise * 0.05) + (interference * 0.12); // Increased (was 0.03 and 0.08)
     }
     else if (mode == 2) { // XP - subtle but visible noise
-        float interference = step(0.97, noise);
-        return (noise * 0.02) + (interference * 0.05);
+        float interference = step(0.96, noise); // Was 0.97
+        return (noise * 0.04) + (interference * 0.08); // Increased (was 0.02 and 0.05)
     }
     else if (mode == 3) { // Win98 - strong noise with more static
-        float interference = step(0.93, noise);
-        return (noise * 0.05) + (interference * 0.12);
+        float interference = step(0.91, noise); // Was 0.93
+        return (noise * 0.08) + (interference * 0.18); // Increased (was 0.05 and 0.12)
     }
     
     // Default fallback
-    return noise * 0.04;
+    return noise * 0.07; // Increased from 0.04
 }
 
 // Color grading function for different display types
@@ -311,10 +317,6 @@ float glitchEffect(vec2 uv, float time, int mode) {
 void main() {
     float time = iTime * 0.5;
     
-    // Calculate fade-in effect (smooth transition over 1.5 seconds)
-    float fadeIn = min(iTime / 1.5, 1.0);
-    fadeIn = smoothstep(0.0, 1.0, fadeIn); // Make the fade-in smoother
-    
     // Get the UV coordinates
     vec2 uv = vUv;
     
@@ -324,7 +326,7 @@ void main() {
     // Check if the pixel is still within the screen after curvature (should be minimal now)
     if (curvedUv.x < 0.0 || curvedUv.x > 1.0 || curvedUv.y < 0.0 || curvedUv.y > 1.0) {
         // Black outside the screen
-        gl_FragColor = vec4(0.0, 0.0, 0.0, fadeIn * iIntensity);
+        gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);
         return;
     }
     
@@ -335,12 +337,12 @@ void main() {
     // Apply the wavy effect instead of just pixelation
     vec2 wavyUv = wavyEffect(curvedUv, time, iMode);
     
-    // Apply stronger pixelation for bigger, more visible pixels
-    float pixelReduction = 1.0; // Reduced from 1.2 for maximum pixel size
-    vec2 pixelatedUv = pixelate(wavyUv, 3.5 / pixelReduction, iMode); // Increased base pixel size from 2.5 to 3.5
+    // We'll still apply some pixelation, but much less than before
+    float pixelReduction = 4.0; // Increased from 3.0 for even less pixelation
+    vec2 pixelatedUv = pixelate(wavyUv, 1.5 / pixelReduction, iMode);
     
-    // Blend between wavy and pixelated for organic feel with more emphasis on pixels
-    vec2 finalUv = mix(wavyUv, pixelatedUv, 0.85); // 15% wavy, 85% pixelated (increased from 75%)
+    // Blend between wavy and pixelated for organic feel
+    vec2 finalUv = mix(wavyUv, pixelatedUv, 0.25); // 75% wavy, 25% pixelated (changed from 60/40)
     
     // Get the base color from the texture
     vec3 color = texture2D(iTexture, finalUv).rgb;
@@ -349,17 +351,6 @@ void main() {
     float waveShift = sin(finalUv.y * 8.0 + time * 0.6) * 0.001; // Small wavy adjustment
     float shiftAmount = 0.004 + 0.002 * sin(time * 0.5) + waveShift;
     color = mix(color, rgbShift(iTexture, finalUv, shiftAmount, iMode), 0.4);
-    
-    // Add pixel edge enhancement for more defined pixels
-    vec2 pixEdge = abs(fract(finalUv * iResolution.xy * 0.05) - 0.5); // Reduced from 0.075 for even larger edges
-    float pixelEdgeFactor = smoothstep(0.2, 0.1, min(pixEdge.x, pixEdge.y)) * 0.2; // Increased from 0.15 for stronger effect
-    color *= 1.0 - pixelEdgeFactor;
-    
-    // Add stronger pixel bloom effect to make pixels more prominent
-    vec2 bloomUv = pixelatedUv;
-    vec3 bloomColor = texture2D(iTexture, bloomUv).rgb;
-    bloomColor = pow(bloomColor, vec3(1.8)); // Brighten highlights (slightly less than before for better balance)
-    color = mix(color, bloomColor, 0.3); // Increased from 0.2 to 0.3 for stronger bloom
     
     // Apply wavy scanlines appropriate for the mode
     color *= scanline(finalUv, time, iMode);
@@ -370,9 +361,11 @@ void main() {
     // Apply vignette based on mode (much reduced)
     color *= vignette(curvedUv, iMode);
     
-    // Add noise/static based on mode with wavy variation
+    // Add noise/static based on mode with wavy variation - enhanced for mobile
     float noiseWave = sin(finalUv.x * 6.0 + finalUv.y * 6.0 + time * 0.2) * 0.2;
-    color += noise(finalUv, time + noiseWave, iMode);
+    // Add a bit more noise for better visibility
+    float noiseAmount = 1.4; // Increase noise amount multiplier (new parameter)
+    color += noise(finalUv, time + noiseWave, iMode) * noiseAmount;
     
     // Apply color grading based on mode with slight wave effect
     color = colorGrading(color, iMode);
@@ -398,6 +391,6 @@ void main() {
         color = mix(color, color * vec3(1.3, 0.8, 0.8), colorBar * 0.3);
     }
     
-    // Apply the fade-in effect to the final color
-    gl_FragColor = vec4(color, fadeIn * iIntensity);
+    // Output the final color
+    gl_FragColor = vec4(color, iIntensity);
 } 
