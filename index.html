@@ -37,7 +37,7 @@
             box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
             transition: width 0.3s ease, height 0.3s ease, top 0.3s ease, left 0.3s ease, transform 0.3s ease;
         }
-       
+        
         @media (max-width: 768px) {
             #venerus-window {   
                  height: 117px;
@@ -3144,7 +3144,7 @@
     <!-- Desktop Area -->
     <div class="desktop-area">
         <!-- Windows XP Trash Icon -->
-        <div class="desktop-icon" id="trash-icon">
+        <div class="desktop-icon" id="trash-icon" data-sound="error">
             <img src="https://win98icons.alexmeub.com/icons/png/recycle_bin_empty-5.png" alt="Recycle Bin">
             <span class="icon-label">Recycle Bin</span>
         </div>
@@ -3160,6 +3160,8 @@
             <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/19/Spotify_logo_without_text.svg/240px-Spotify_logo_without_text.svg.png" alt="Spotify">
             <span class="icon-label">Venerus Spotify</span>
         </div>
+        
+        <!-- Calendar Icon removed as requested -->
     </div>
     
     <div class="window" id="wmp-window">
@@ -3186,7 +3188,7 @@
                 <canvas id="modal-visualizer"></canvas>
                 <div class="visualization-status"></div>
                 <!-- Windows XP Style Share Button (Initially Hidden) -->
-                <button id="share-song-button" class="xp-button" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: none; cursor: pointer; font-family: 'Tahoma', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 5px;">
+                <button id="share-song-button" class="xp-button" data-sound="tada" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 20; display: none; cursor: pointer; font-family: 'Tahoma', sans-serif; font-size: 12px; display: flex; align-items: center; gap: 5px;">
                     <img src="https://win98icons.alexmeub.com/icons/png/network_internet_pcs_installer-5.png" alt="Share" style="width: 16px; height: 16px; margin-right: 4px;">
                     Condividi questa canzone
                 </button>
@@ -3296,12 +3298,12 @@
     </div>
     
     <div class="taskbar">
-        <button class="start-button" id="taskbar-share-button">
+        <button class="start-button" id="taskbar-share-button" data-sound="tada">
             <img src="https://win98icons.alexmeub.com/icons/png/windows-0.png" alt="Share">
             Share
         </button>
         <div class="quick-launch">
-            <button class="quick-launch-icon" id="wmp-icon" title="Windows Media Player">
+            <button class="quick-launch-icon" id="wmp-icon" title="Windows Media Player" data-open-modal="true">
                 <img src="https://win98icons.alexmeub.com/icons/png/media_player-0.png" alt="WMP">
             </button>
             <button class="quick-launch-icon" id="ie-icon" title="Internet Explorer">
@@ -3708,13 +3710,13 @@
                 
                 try {
                     // This part can throw security errors when running locally
-                    const iframeDoc = spotifyIframe.contentDocument || 
-                                    (spotifyIframe.contentWindow && spotifyIframe.contentWindow.document);
-                                    
-                    // If we can see iframe content, it's probably ready
+                const iframeDoc = spotifyIframe.contentDocument || 
+                                 (spotifyIframe.contentWindow && spotifyIframe.contentWindow.document);
+                                 
+                // If we can see iframe content, it's probably ready
                     if (iframeDoc) {
-                        completeLoading();
-                        clearInterval(checkIframeReadiness);
+                    completeLoading();
+                    clearInterval(checkIframeReadiness);
                     }
                 } catch (securityError) {
                     console.warn('Security restriction accessing iframe - this is normal when running locally');
@@ -5134,5 +5136,12 @@
             }
         });
     </script>
+    
+    <!-- Windows XP Sounds System -->
+    <script src="sounds/SoundManager.js"></script>
+    <script src="sounds/windowsXPSounds.js"></script>
+    
+    <!-- Main application script (only load once) -->
+    <script src="visualizer.js"></script>
 </body>
 </html> 
