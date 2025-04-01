@@ -22,8 +22,9 @@ window.soundManager = {
     sounds,
     enabled: true,
     
-    // Track which windows have active sound operations
+    // Track which windows have active sound operations - use WeakMap instead of data attributes
     activeWindows: new Set(),
+    closingWindows: new WeakMap(), // Use WeakMap to track closing windows without affecting DOM
     
     // Play a sound effect
     play(soundName, volume = 0.5) {
@@ -81,8 +82,26 @@ window.soundManager = {
     // Check if a window is currently active with sounds
     isWindowActive(windowId) {
         return this.activeWindows.has(windowId);
+    },
+    
+    // Mark a window as closing - use WeakMap
+    markWindowClosing(windowElement) {
+        if (!windowElement) return;
+        this.closingWindows.set(windowElement, true);
+        
+        setTimeout(() => {
+            this.closingWindows.delete(windowElement);
+        }, 1500);
+    },
+    
+    // Check if a window is closing - use WeakMap
+    isWindowClosing(windowElement) {
+        return windowElement && this.closingWindows.has(windowElement);
     }
 };
+
+// Use WeakMap to track window states without DOM attributes
+const windowStates = new WeakMap();
 
 // Add event listeners to play sounds for various interactions
 function setupWindowsSounds() {
@@ -98,60 +117,73 @@ function setupWindowsSounds() {
     // Variable to store the ID of the window that most recently had a sound played
     let lastSoundWindow = null;
     
-    // Mark existing visible windows as already activated to prevent sounds
-    // on the first interaction (especially for WMP window that's visible on load)
+    // Mark existing visible windows in our WeakMap
     document.querySelectorAll('.window:not(.minimized)').forEach(win => {
         // Only apply to windows that are visible from the start
         if (win.style.display !== 'none') {
-            win.dataset.soundPlayed = 'true';
-            win.dataset.initialWindow = 'true';
+            windowStates.set(win, { 
+                initialWindow: true,
+                soundPlayed: true
+            });
             console.log('Marked initial window:', win.id);
         }
     });
     
-    // Clear initial window flags after a short delay to ensure close sounds work
+    // Clear initial window flags after a short delay
     setTimeout(() => {
-        document.querySelectorAll('.window[data-initial-window="true"]').forEach(win => {
-            // Reset the initial window flag but keep soundPlayed temporarily
-            win.dataset.initialWindow = '';
-            console.log('Reset initial window flag for:', win.id);
-            
-            // After another brief delay, reset the soundPlayed flag too
-            setTimeout(() => {
-                win.dataset.soundPlayed = '';
-                console.log('Reset sound played flag for:', win.id);
-            }, 500);
+        document.querySelectorAll('.window').forEach(win => {
+            const state = windowStates.get(win) || {};
+            if (state.initialWindow) {
+                // Update state in WeakMap instead of using dataset
+                windowStates.set(win, { 
+                    ...state, 
+                    initialWindow: false 
+                });
+                console.log('Reset initial window flag for:', win.id);
+                
+                // After another brief delay, reset the soundPlayed flag too
+                setTimeout(() => {
+                    const newState = windowStates.get(win) || {};
+                    windowStates.set(win, { 
+                        ...newState, 
+                        soundPlayed: false 
+                    });
+                    console.log('Reset sound played flag for:', win.id);
+                }, 500);
+            }
         });
     }, 3000);
     
     // Function to handle sound for a specific window
     function playSoundForWindow(windowElement, soundName, volume = 0.6, duration = 1000) {
+        // Get current window state from WeakMap
+        const state = windowStates.get(windowElement) || {};
+        
         // Special case for critical sound (close) - always play it even for initial windows
         if (soundName === 'critical') {
-            // Remove initial window marker to ensure close sound always plays
-            windowElement.dataset.initialWindow = '';
+            // Update state in WeakMap instead of using dataset
+            windowStates.set(windowElement, { 
+                ...state, 
+                initialWindow: false 
+            });
             
             // If this is the first close on an initially loaded window, force play sound
-            if (windowElement.dataset.soundPlayed === 'true') {
+            if (state.soundPlayed) {
                 console.log(`Forcing critical sound for initial window: ${windowElement.id}`);
-                windowElement.dataset.soundPlayed = '';
+                windowStates.set(windowElement, { 
+                    ...state, 
+                    soundPlayed: false 
+                });
             }
             
             // Check if we are already in close operation to prevent double sound
-            if (windowElement.dataset.closingInProgress === 'true') {
+            if (soundManager.isWindowClosing(windowElement)) {
                 console.log(`Skipping duplicate close sound for: ${windowElement.id}`);
                 return false;
             }
             
             // Mark window as being closed to prevent duplicate sounds
-            windowElement.dataset.closingInProgress = 'true';
-            
-            // Clear the closing flag after close operation is done
-            setTimeout(() => {
-                if (windowElement) {
-                    windowElement.dataset.closingInProgress = '';
-                }
-            }, 1500);
+            soundManager.markWindowClosing(windowElement);
         }
         
         // Don't play sound if already active for this window and it's not a critical sound
@@ -169,13 +201,20 @@ function setupWindowsSounds() {
             lastSoundWindow = windowElement.id;
         }
         
-        // Set the sound played marker
-        windowElement.dataset.soundPlayed = 'true';
+        // Update state in WeakMap
+        windowStates.set(windowElement, { 
+            ...state, 
+            soundPlayed: true 
+        });
         
         // Reset the marker after the specified duration
         setTimeout(() => {
             if (windowElement) {
-                windowElement.dataset.soundPlayed = '';
+                const currentState = windowStates.get(windowElement) || {};
+                windowStates.set(windowElement, { 
+                    ...currentState, 
+                    soundPlayed: false 
+                });
             }
         }, duration);
         
@@ -191,10 +230,16 @@ function setupWindowsSounds() {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
                 
+                // Get current window state
+                const state = windowStates.get(windowElement) || {};
+                
                 // Special case for initial windows - always allow close sound
-                if (windowElement.dataset.initialWindow === 'true') {
-                    windowElement.dataset.initialWindow = '';
-                    windowElement.dataset.soundPlayed = '';
+                if (state.initialWindow) {
+                    windowStates.set(windowElement, { 
+                        ...state, 
+                        initialWindow: false,
+                        soundPlayed: false
+                    });
                 }
                 
                 // Set flag to prevent mutation observer from playing sounds
@@ -224,8 +269,12 @@ function setupWindowsSounds() {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
                 
-                // Clear initial window flag on first interaction
-                windowElement.dataset.initialWindow = '';
+                // Clear initial window flag on first interaction using WeakMap
+                const state = windowStates.get(windowElement) || {};
+                windowStates.set(windowElement, { 
+                    ...state, 
+                    initialWindow: false 
+                });
                 
                 // Set flag to prevent mutation observer from playing sounds
                 recentWindowControlAction = true;
@@ -248,8 +297,12 @@ function setupWindowsSounds() {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
                 
-                // Clear initial window flag on first interaction
-                windowElement.dataset.initialWindow = '';
+                // Clear initial window flag on first interaction using WeakMap
+                const state = windowStates.get(windowElement) || {};
+                windowStates.set(windowElement, { 
+                    ...state, 
+                    initialWindow: false 
+                });
                 
                 // Set flag to prevent mutation observer from playing sounds
                 recentWindowControlAction = true;
@@ -298,9 +351,13 @@ function setupWindowsSounds() {
                 console.log(`${iconId} clicked, playing ${soundName} sound`);
                 recentWindowControlAction = true;
                 
-                // Clear initial window flag for the target window
-                if (targetWindow && targetWindow.dataset.initialWindow === 'true') {
-                    targetWindow.dataset.initialWindow = '';
+                // Clear initial window flag for the target window using WeakMap
+                if (targetWindow) {
+                    const state = windowStates.get(targetWindow) || {};
+                    windowStates.set(targetWindow, { 
+                        ...state, 
+                        initialWindow: false 
+                    });
                 }
                 
                 if (targetWindow) {
@@ -357,10 +414,12 @@ function setupWindowsSounds() {
                 if (windowId) {
                     const targetWindow = document.getElementById(windowId);
                     if (targetWindow) {
-                        // Clear initial window flag for the target window
-                        if (targetWindow.dataset.initialWindow === 'true') {
-                            targetWindow.dataset.initialWindow = '';
-                        }
+                        // Clear initial window flag for the target window using WeakMap
+                        const state = windowStates.get(targetWindow) || {};
+                        windowStates.set(targetWindow, { 
+                            ...state, 
+                            initialWindow: false 
+                        });
                         
                         playSoundForWindow(targetWindow, 'notify', 0.6, 1000);
                     } else {
@@ -408,24 +467,34 @@ function setupWindowsSounds() {
                         continue;
                     }
                     
+                    // Get current window state
+                    const state = windowStates.get(element) || {};
+                    
                     // Check if this is a window element becoming visible
                     if (element.classList.contains('window') && 
                         !element.classList.contains('minimized') && 
                         element.style.display !== 'none' && 
-                        !element.dataset.soundPlayed) {
+                        !state.soundPlayed) {
                         
                         // Special handling for windows that were initially visible
-                        if (element.dataset.initialWindow === 'true') {
+                        if (state.initialWindow) {
                             // On first interaction, remove the initial window marker
                             // but don't play a sound, just set the sound played marker
-                            element.dataset.initialWindow = '';
-                            element.dataset.soundPlayed = 'true';
+                            windowStates.set(element, {
+                                ...state,
+                                initialWindow: false,
+                                soundPlayed: true
+                            });
                             console.log('Skipping sound for initial window:', element.id);
                             
                             // Reset the marker after a delay
                             setTimeout(() => {
                                 if (element) {
-                                    element.dataset.soundPlayed = '';
+                                    const currentState = windowStates.get(element) || {};
+                                    windowStates.set(element, {
+                                        ...currentState,
+                                        soundPlayed: false
+                                    });
                                 }
                             }, 800);
                         } else {

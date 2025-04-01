@@ -8,8 +8,10 @@ class SoundManager {
         this.sounds = {};
         this.enabled = true;
         
-        // Add tracking for active windows with sounds
+        // Add tracking for active windows with sounds using WeakMap
         this.activeWindows = new Set();
+        this.windowStates = new WeakMap(); // Store window states without affecting DOM
+        this.closingWindows = new WeakMap(); // Track closing windows
         
         // Initialize sound effects
         this.init();
@@ -109,6 +111,55 @@ class SoundManager {
     }
     
     /**
+     * Mark a window as closing using WeakMap
+     * @param {Element} windowElement - The window element to mark
+     */
+    markWindowClosing(windowElement) {
+        if (!windowElement) return;
+        this.closingWindows.set(windowElement, true);
+        
+        setTimeout(() => {
+            this.closingWindows.delete(windowElement);
+        }, 1500);
+    }
+    
+    /**
+     * Check if a window is closing
+     * @param {Element} windowElement - The window element to check
+     * @returns {boolean} - Whether the window is closing
+     */
+    isWindowClosing(windowElement) {
+        return windowElement && this.closingWindows.has(windowElement);
+    }
+    
+    /**
+     * Set a state value for a window
+     * @param {Element} windowElement - The window element
+     * @param {string} key - The state property name
+     * @param {*} value - The state value
+     */
+    setWindowState(windowElement, key, value) {
+        if (!windowElement) return;
+        
+        const state = this.windowStates.get(windowElement) || {};
+        state[key] = value;
+        this.windowStates.set(windowElement, state);
+    }
+    
+    /**
+     * Get a state value for a window
+     * @param {Element} windowElement - The window element
+     * @param {string} key - The state property name
+     * @returns {*} - The state value
+     */
+    getWindowState(windowElement, key) {
+        if (!windowElement) return undefined;
+        
+        const state = this.windowStates.get(windowElement) || {};
+        return state[key];
+    }
+    
+    /**
      * Play a sound effect for a specific window
      * @param {Element} windowElement - The window DOM element
      * @param {string} soundName - The name of the sound to play
@@ -123,17 +174,17 @@ class SoundManager {
         
         // Special case for window close sound - always play it even for initially loaded windows
         if (soundName === 'windowClose' || soundName === 'critical') {
-            // Remove initial window marker to ensure close sound always plays
-            windowElement.dataset.initialWindow = '';
+            // Remove initial window marker
+            this.setWindowState(windowElement, 'initialWindow', false);
             
             // If this is the first close on an initially loaded window, force play sound
-            if (windowElement.dataset.soundPlayed === 'true') {
+            if (this.getWindowState(windowElement, 'soundPlayed')) {
                 console.log(`Forcing ${soundName} sound for initial window: ${windowId}`);
-                windowElement.dataset.soundPlayed = '';
+                this.setWindowState(windowElement, 'soundPlayed', false);
             }
             
             // Check if we are already in close operation to prevent double sound
-            if (windowElement.dataset.closingInProgress === 'true') {
+            if (this.isWindowClosing(windowElement)) {
                 console.log(`Skipping duplicate close sound for: ${windowId}`);
                 return false;
             }
@@ -141,26 +192,23 @@ class SoundManager {
             // Check if global soundManager is handling this
             if (window.soundManager && 
                 soundName === 'windowClose' && 
-                windowElement.dataset.criticalSoundPlayed === 'true') {
+                this.getWindowState(windowElement, 'criticalSoundPlayed')) {
                 console.log(`Skipping windowClose, critical already played for: ${windowId}`);
                 return false;
             }
             
             // Mark window as being closed to prevent duplicate sounds
-            windowElement.dataset.closingInProgress = 'true';
+            this.markWindowClosing(windowElement);
             
             // If this is the 'critical' sound from windowsXPSounds.js, mark it
             if (soundName === 'critical') {
-                windowElement.dataset.criticalSoundPlayed = 'true';
+                this.setWindowState(windowElement, 'criticalSoundPlayed', true);
+                
+                // Reset this flag after some time
+                setTimeout(() => {
+                    this.setWindowState(windowElement, 'criticalSoundPlayed', false);
+                }, 1500);
             }
-            
-            // Clear the closing flag after close operation is done
-            setTimeout(() => {
-                if (windowElement) {
-                    windowElement.dataset.closingInProgress = '';
-                    windowElement.dataset.criticalSoundPlayed = '';
-                }
-            }, 1500);
         }
         
         // Don't play sound if already active for this window (except for close sounds)
@@ -179,12 +227,12 @@ class SoundManager {
         }
         
         // Set the sound played marker to prevent duplicate sounds
-        windowElement.dataset.soundPlayed = 'true';
+        this.setWindowState(windowElement, 'soundPlayed', true);
         
         // Reset the marker after the specified duration
         setTimeout(() => {
             if (windowElement) {
-                windowElement.dataset.soundPlayed = '';
+                this.setWindowState(windowElement, 'soundPlayed', false);
             }
         }, duration);
         
@@ -263,7 +311,14 @@ class SoundManager {
         // Find all windows and window controls
         const windows = document.querySelectorAll('.window');
         
+        // Mark initial windows
         windows.forEach(windowElement => {
+            if (windowElement.style.display !== 'none' && !windowElement.classList.contains('minimized')) {
+                this.setWindowState(windowElement, 'initialWindow', true);
+                this.setWindowState(windowElement, 'soundPlayed', true);
+                console.log('Marked initial window in SoundManager:', windowElement.id);
+            }
+            
             // Window close button - use our specific "closing window" sound
             const closeButton = windowElement.querySelector('button[aria-label="Close"]');
             if (closeButton) {
@@ -292,6 +347,24 @@ class SoundManager {
                 });
             }
         });
+        
+        // Reset initial window flags after a delay
+        setTimeout(() => {
+            windows.forEach(windowElement => {
+                const isInitial = this.getWindowState(windowElement, 'initialWindow');
+                if (isInitial) {
+                    // After a delay, reset the initial window flag
+                    this.setWindowState(windowElement, 'initialWindow', false);
+                    console.log('Reset initial window flag in SoundManager for:', windowElement.id);
+                    
+                    // After another brief delay, reset the soundPlayed flag too
+                    setTimeout(() => {
+                        this.setWindowState(windowElement, 'soundPlayed', false);
+                        console.log('Reset sound played flag in SoundManager for:', windowElement.id);
+                    }, 500);
+                }
+            });
+        }, 3000);
         
         // Setup error handling to play the error sound
         window.addEventListener('error', () => {
