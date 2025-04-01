@@ -278,12 +278,45 @@ if (typeof window.windowsXPSoundsInitialized === 'undefined') {
                     taskbar.style.width = 'auto';
                 }
                 
-                // Fix window control buttons on mobile
+                // Fix window control buttons on mobile - but preserve their existing icons
                 const windowButtons = document.querySelectorAll('.title-bar-controls button');
                 windowButtons.forEach(button => {
-                    // Ensure button background images are visible
-                    button.style.backgroundColor = 'transparent';
-                    button.style.border = '1px solid #888';
+                    // Only apply minimal styles to ensure buttons remain visible
+                    // but don't override the existing icon backgrounds
+                    if (!button.style.display || button.style.display === 'none') {
+                        button.style.display = 'inline-block';
+                    }
+                    if (!button.style.visibility || button.style.visibility === 'hidden') {
+                        button.style.visibility = 'visible';
+                    }
+                    // Ensure buttons have sufficient size to be tappable
+                    button.style.minWidth = '22px';
+                    button.style.minHeight = '22px';
+                    // Add subtle border if not already present
+                    if (!button.style.border) {
+                        button.style.border = '1px solid rgba(136, 136, 136, 0.3)';
+                    }
+                });
+                
+                // Fix window title bars for better appearance on mobile
+                const titleBars = document.querySelectorAll('.title-bar');
+                titleBars.forEach(titleBar => {
+                    titleBar.style.display = 'flex';
+                    titleBar.style.alignItems = 'center';
+                    titleBar.style.justifyContent = 'space-between';
+                    if (!titleBar.style.padding) {
+                        titleBar.style.padding = '2px 4px';
+                    }
+                    titleBar.style.minHeight = '24px';
+                });
+                
+                // Fix window titles for better mobile readability
+                const windowTitles = document.querySelectorAll('.title-bar-text');
+                windowTitles.forEach(title => {
+                    title.style.fontSize = '14px';
+                    title.style.overflow = 'hidden';
+                    title.style.textOverflow = 'ellipsis';
+                    title.style.whiteSpace = 'nowrap';
                 });
             }
         }
