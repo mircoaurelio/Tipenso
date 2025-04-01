@@ -234,7 +234,7 @@ function setupWindowsSounds() {
                 // Reset flags after a delay
                 setTimeout(() => {
                     recentWindowControlAction = false;
-                }, 500);
+                    }, 500);
             });
         }
         
@@ -258,7 +258,7 @@ function setupWindowsSounds() {
                 // Reset flags after a delay
                 setTimeout(() => {
                     recentWindowControlAction = false;
-                }, 500);
+                    }, 500);
             });
         }
     });
@@ -320,15 +320,15 @@ function setupWindowsSounds() {
     handleIconClick('show-desktop', 'venerus-window');
     handleIconClick('spotify-icon', 'venerus-window');
     handleIconClick('trash-icon', null, 'error');
-
+    
     // CUSTOM: Share button - play tada.mp3
     const shareButtons = document.querySelectorAll('#share-song-button, #taskbar-share-button');
     shareButtons.forEach(button => {
         if (!processedButtons.has(button)) {
             processedButtons.add(button);
-            button.addEventListener('click', () => {
-                soundManager.play('tada', 0.6);
-            });
+        button.addEventListener('click', () => {
+            soundManager.play('tada', 0.6);
+        });
         }
     });
 
@@ -370,7 +370,7 @@ function setupWindowsSounds() {
                 
                 setTimeout(() => { 
                     recentWindowControlAction = false;
-                }, 500);
+        }, 500);
             });
         }
     });
