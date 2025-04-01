@@ -5,7 +5,7 @@
 
 // Initialize sound clips with only the essential Windows XP sounds
 const sounds = {
-    // Essential sounds
+    // Essential sounds only - reduce 404 errors
     error: new Audio('sounds/windows-xp-sounds/error.mp3'),        // For trash can
     critical: new Audio('sounds/windows-xp-sounds/critical_stop.mp3'), // For close button
     exclamation: new Audio('sounds/windows-xp-sounds/exclamation.mp3'), // For maximize button
@@ -13,14 +13,15 @@ const sounds = {
     notify: new Audio('sounds/windows-xp-sounds/notify.mp3'),      // For opening modals
     minimize: new Audio('sounds/windows-xp-sounds/minimize.mp3'),  // For minimize button
     tada: new Audio('sounds/windows-xp-sounds/tada.mp3')           // For share button
-    
-    // All other sounds have been removed as they're not needed
 };
 
 // Create the sound manager
 window.soundManager = {
     sounds,
     enabled: true,
+    
+    // Track which windows have active sound operations
+    activeWindows: new Set(),
     
     // Play a sound effect
     play(soundName, volume = 0.5) {
@@ -65,6 +66,19 @@ window.soundManager = {
     setEnabled(enabled) {
         this.enabled = enabled;
         console.log(`Sound effects ${enabled ? 'enabled' : 'disabled'}`);
+    },
+    
+    // Add window to active sounds tracking
+    addActiveWindow(windowId) {
+        this.activeWindows.add(windowId);
+        setTimeout(() => {
+            this.activeWindows.delete(windowId);
+        }, 1000);
+    },
+    
+    // Check if a window is currently active with sounds
+    isWindowActive(windowId) {
+        return this.activeWindows.has(windowId);
     }
 };
 
@@ -79,6 +93,9 @@ function setupWindowsSounds() {
     // Flag to track window control actions to prevent double sounds
     let recentWindowControlAction = false;
     
+    // Variable to store the ID of the window that most recently had a sound played
+    let lastSoundWindow = null;
+    
     // Mark existing visible windows as already activated to prevent sounds
     // on the first interaction (especially for WMP window that's visible on load)
     document.querySelectorAll('.window:not(.minimized)').forEach(win => {
@@ -90,6 +107,79 @@ function setupWindowsSounds() {
         }
     });
     
+    // Clear initial window flags after a short delay to ensure close sounds work
+    setTimeout(() => {
+        document.querySelectorAll('.window[data-initial-window="true"]').forEach(win => {
+            // Reset the initial window flag but keep soundPlayed temporarily
+            win.dataset.initialWindow = '';
+            console.log('Reset initial window flag for:', win.id);
+            
+            // After another brief delay, reset the soundPlayed flag too
+            setTimeout(() => {
+                win.dataset.soundPlayed = '';
+                console.log('Reset sound played flag for:', win.id);
+            }, 500);
+        });
+    }, 3000);
+    
+    // Function to handle sound for a specific window
+    function playSoundForWindow(windowElement, soundName, volume = 0.6, duration = 1000) {
+        // Special case for critical sound (close) - always play it even for initial windows
+        if (soundName === 'critical') {
+            // Remove initial window marker to ensure close sound always plays
+            windowElement.dataset.initialWindow = '';
+            
+            // If this is the first close on an initially loaded window, force play sound
+            if (windowElement.dataset.soundPlayed === 'true') {
+                console.log(`Forcing critical sound for initial window: ${windowElement.id}`);
+                windowElement.dataset.soundPlayed = '';
+            }
+            
+            // Check if we are already in close operation to prevent double sound
+            if (windowElement.dataset.closingInProgress === 'true') {
+                console.log(`Skipping duplicate close sound for: ${windowElement.id}`);
+                return false;
+            }
+            
+            // Mark window as being closed to prevent duplicate sounds
+            windowElement.dataset.closingInProgress = 'true';
+            
+            // Clear the closing flag after close operation is done
+            setTimeout(() => {
+                if (windowElement) {
+                    windowElement.dataset.closingInProgress = '';
+                }
+            }, 1500);
+        }
+        
+        // Don't play sound if already active for this window and it's not a critical sound
+        if (windowElement.id && soundManager.isWindowActive(windowElement.id) && soundName !== 'critical') {
+            console.log(`Skipping sound ${soundName} for window ${windowElement.id} - already active`);
+            return false;
+        }
+        
+        // Play the sound
+        const result = soundManager.play(soundName, volume);
+        
+        // Mark this window as having an active sound
+        if (windowElement.id) {
+            soundManager.addActiveWindow(windowElement.id);
+            lastSoundWindow = windowElement.id;
+        }
+        
+        // Set the sound played marker
+        windowElement.dataset.soundPlayed = 'true';
+        
+        // Reset the marker after the specified duration
+        setTimeout(() => {
+            if (windowElement) {
+                windowElement.dataset.soundPlayed = '';
+            }
+        }, duration);
+        
+        return result;
+    }
+    
     windows.forEach(windowElement => {
         // Window close button - CUSTOM: Play critical_stop.mp3
         const closeButton = windowElement.querySelector('button[aria-label="Close"]');
@@ -99,10 +189,10 @@ function setupWindowsSounds() {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
                 
-                // Check if sound was recently played for this window to prevent double sounds
-                if (windowElement.dataset.soundPlayed === 'true') {
-                    console.log('Skipping close sound, sound already played for:', windowElement.id);
-                    return;
+                // Special case for initial windows - always allow close sound
+                if (windowElement.dataset.initialWindow === 'true') {
+                    windowElement.dataset.initialWindow = '';
+                    windowElement.dataset.soundPlayed = '';
                 }
                 
                 // Set flag to prevent mutation observer from playing sounds
@@ -112,26 +202,15 @@ function setupWindowsSounds() {
                 // for a short period after close button is clicked
                 window.preventAllSounds = true;
                 
-                // Force remove any sound markers from the window to prevent
-                // sounds playing when window closes or gets minimized
-                windowElement.dataset.soundPlayed = 'true';
-                
-                // Play the critical sound for close
+                // Play the critical sound for close - always allow it to play
                 console.log('Window close clicked, playing critical sound for:', windowElement.id);
-                soundManager.play('critical', 0.6);
+                playSoundForWindow(windowElement, 'critical', 0.6, 2000);
                 
                 // Reset flags after a longer delay for window close operations
                 setTimeout(() => { 
                     recentWindowControlAction = false;
                     window.preventAllSounds = false;
-                    
-                    // Keep the soundPlayed marker on the window for a bit longer
-                    setTimeout(() => {
-                        if (windowElement) {
-                            windowElement.dataset.soundPlayed = '';
-                        }
-                    }, 800);
-                }, 1500); // Longer timeout to prevent any sounds during closing animation
+                }, 1000);
             });
         }
         
@@ -142,22 +221,20 @@ function setupWindowsSounds() {
             maximizeButton.addEventListener('click', (event) => {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
+                
+                // Clear initial window flag on first interaction
+                windowElement.dataset.initialWindow = '';
+                
                 // Set flag to prevent mutation observer from playing sounds
                 recentWindowControlAction = true;
-                // Play the exclamation sound for maximize
-                soundManager.play('exclamation', 0.6);
                 
-                // Force set sound marker to prevent additional sounds
-                windowElement.dataset.soundPlayed = 'true';
+                // Play the exclamation sound for maximize
+                playSoundForWindow(windowElement, 'exclamation', 0.6, 1000);
                 
                 // Reset flags after a delay
                 setTimeout(() => {
                     recentWindowControlAction = false;
-                    // Keep the soundPlayed marker a bit longer
-                    setTimeout(() => {
-                        windowElement.dataset.soundPlayed = '';
-                    }, 500);
-                }, 1000);
+                }, 500);
             });
         }
         
@@ -168,22 +245,20 @@ function setupWindowsSounds() {
             minimizeButton.addEventListener('click', (event) => {
                 // Stop event propagation to prevent other listeners from firing
                 event.stopPropagation();
+                
+                // Clear initial window flag on first interaction
+                windowElement.dataset.initialWindow = '';
+                
                 // Set flag to prevent mutation observer from playing sounds
                 recentWindowControlAction = true;
-                // Play the minimize sound
-                soundManager.play('minimize', 0.6);
                 
-                // Force set sound marker to prevent additional sounds
-                windowElement.dataset.soundPlayed = 'true';
+                // Play the minimize sound
+                playSoundForWindow(windowElement, 'minimize', 0.6, 1000);
                 
                 // Reset flags after a delay
                 setTimeout(() => {
                     recentWindowControlAction = false;
-                    // Keep the soundPlayed marker a bit longer
-                    setTimeout(() => {
-                        windowElement.dataset.soundPlayed = '';
-                    }, 500);
-                }, 1000);
+                }, 500);
             });
         }
     });
@@ -210,149 +285,54 @@ function setupWindowsSounds() {
         return oldAlert.call(window, message);
     };
 
-    // CUSTOM: Open modal buttons - play notify.mp3
-    // Only add this to buttons with the data-open-modal attribute,
-    // not to regular window control buttons
-    const modalOpenButtons = document.querySelectorAll('[data-open-modal]');
-    console.log('Found modal open buttons:', modalOpenButtons.length);
-    modalOpenButtons.forEach(button => {
-        if (!processedButtons.has(button)) {
-            processedButtons.add(button);
-            button.addEventListener('click', (event) => {
-                console.log('Modal open button clicked, playing notify sound');
-                soundManager.play('notify', 0.6);
+    // Function to handle icon clicks with a consistent approach
+    function handleIconClick(iconId, windowId, soundName = 'notify') {
+        const icon = document.getElementById(iconId);
+        const targetWindow = document.getElementById(windowId);
+        
+        if (icon && !processedButtons.has(icon)) {
+            processedButtons.add(icon);
+            icon.addEventListener('click', (event) => {
+                console.log(`${iconId} clicked, playing ${soundName} sound`);
+                recentWindowControlAction = true;
+                
+                // Clear initial window flag for the target window
+                if (targetWindow && targetWindow.dataset.initialWindow === 'true') {
+                    targetWindow.dataset.initialWindow = '';
+                }
+                
+                if (targetWindow) {
+                    playSoundForWindow(targetWindow, soundName, 0.6, 1000);
+                } else {
+                    soundManager.play(soundName, 0.6);
+                }
+                
+                setTimeout(() => {
+                    recentWindowControlAction = false;
+                }, 500);
             });
         }
-    });
-    
-    // CUSTOM: Trash can - play error.mp3
-    const trashCan = document.getElementById('trash-icon');
-    if (trashCan) {
-        trashCan.addEventListener('click', () => {
-            soundManager.play('error', 0.6);
-        });
     }
-    
-    // Calendar has been removed, no need to check for it anymore
-    
+
+    // Handle various icon clicks
+    handleIconClick('wmp-icon', 'wmp-window');
+    handleIconClick('ie-icon', 'ie-window');
+    handleIconClick('show-desktop', 'venerus-window');
+    handleIconClick('spotify-icon', 'venerus-window');
+    handleIconClick('trash-icon', null, 'error');
+
     // CUSTOM: Share button - play tada.mp3
     const shareButtons = document.querySelectorAll('#share-song-button, #taskbar-share-button');
     shareButtons.forEach(button => {
-        button.addEventListener('click', () => {
-            soundManager.play('tada', 0.6);
-        });
+        if (!processedButtons.has(button)) {
+            processedButtons.add(button);
+            button.addEventListener('click', () => {
+                soundManager.play('tada', 0.6);
+            });
+        }
     });
-    
-    // Check for wmp-icon and add the notify sound directly 
-    // in case data-open-modal event listener is not working
-    const wmpIcon = document.getElementById('wmp-icon');
-    if (wmpIcon && !processedButtons.has(wmpIcon)) {
-        processedButtons.add(wmpIcon);
-        wmpIcon.addEventListener('click', (event) => {
-            console.log('WMP icon clicked directly, playing notify sound');
-            recentWindowControlAction = true;
-            soundManager.play('notify', 0.6);
-            
-            // Get the WMP window and mark it as having played a sound
-            const wmpWindow = document.getElementById('wmp-window');
-            if (wmpWindow) {
-                wmpWindow.dataset.soundPlayed = 'true';
-            }
-            
-            setTimeout(() => { 
-                recentWindowControlAction = false;
-                // Keep soundPlayed marker a bit longer
-                if (wmpWindow) {
-                    setTimeout(() => {
-                        wmpWindow.dataset.soundPlayed = '';
-                    }, 500);
-                }
-            }, 1000);
-        });
-    }
 
-    // Add notify sound to Internet Explorer icon
-    const ieIcon = document.getElementById('ie-icon');
-    if (ieIcon && !processedButtons.has(ieIcon)) {
-        processedButtons.add(ieIcon);
-        ieIcon.addEventListener('click', (event) => {
-            console.log('IE icon clicked, playing notify sound');
-            recentWindowControlAction = true;
-            soundManager.play('notify', 0.6);
-            
-            // Mark IE window as having played a sound
-            const ieWindow = document.getElementById('ie-window');
-            if (ieWindow) {
-                ieWindow.dataset.soundPlayed = 'true';
-            }
-            
-            setTimeout(() => { 
-                recentWindowControlAction = false;
-                // Keep soundPlayed marker a bit longer
-                if (ieWindow) {
-                    setTimeout(() => {
-                        ieWindow.dataset.soundPlayed = '';
-                    }, 500);
-                }
-            }, 1000);
-        });
-    }
-    
-    // Add notify sound to Venerus Spotify button (show-desktop)
-    const showDesktopBtn = document.getElementById('show-desktop');
-    if (showDesktopBtn && !processedButtons.has(showDesktopBtn)) {
-        processedButtons.add(showDesktopBtn);
-        showDesktopBtn.addEventListener('click', (event) => {
-            console.log('Venerus Spotify button clicked, playing notify sound');
-            recentWindowControlAction = true;
-            soundManager.play('notify', 0.6);
-            
-            // Mark Venerus window as having played a sound
-            const venerusWindow = document.getElementById('venerus-window');
-            if (venerusWindow) {
-                venerusWindow.dataset.soundPlayed = 'true';
-            }
-            
-            setTimeout(() => { 
-                recentWindowControlAction = false;
-                // Keep soundPlayed marker a bit longer
-                if (venerusWindow) {
-                    setTimeout(() => {
-                        venerusWindow.dataset.soundPlayed = '';
-                    }, 500);
-                }
-            }, 1000);
-        });
-    }
-
-    // Add sound to Spotify desktop icon
-    const spotifyIcon = document.getElementById('spotify-icon');
-    if (spotifyIcon && !processedButtons.has(spotifyIcon)) {
-        processedButtons.add(spotifyIcon);
-        spotifyIcon.addEventListener('click', (event) => {
-            console.log('Spotify desktop icon clicked, playing notify sound');
-            recentWindowControlAction = true;
-            soundManager.play('notify', 0.6);
-            
-            // Mark Venerus window as having played a sound since that's what this opens
-            const venerusWindow = document.getElementById('venerus-window');
-            if (venerusWindow) {
-                venerusWindow.dataset.soundPlayed = 'true';
-            }
-            
-            setTimeout(() => { 
-                recentWindowControlAction = false;
-                // Keep soundPlayed marker a bit longer
-                if (venerusWindow) {
-                    setTimeout(() => {
-                        venerusWindow.dataset.soundPlayed = '';
-                    }, 500);
-                }
-            }, 1000);
-        });
-    }
-
-    // Also add notify sound to program buttons in taskbar
+    // Also add notify sound to program buttons in taskbar with improved handling
     const taskbarButtons = document.querySelectorAll('#active-programs button');
     taskbarButtons.forEach(button => {
         if (!processedButtons.has(button)) {
@@ -360,10 +340,8 @@ function setupWindowsSounds() {
             button.addEventListener('click', (event) => {
                 console.log('Taskbar program button clicked, playing notify sound');
                 recentWindowControlAction = true;
-                soundManager.play('notify', 0.6);
                 
                 // Get window ID from taskbar button class or data attribute
-                // Button class may contain window ID like "wmp-window-button"
                 const className = button.className;
                 const buttonMatch = className.match(/(\w+)-window-button/);
                 let windowId = buttonMatch ? buttonMatch[1] + '-window' : null;
@@ -373,42 +351,31 @@ function setupWindowsSounds() {
                     windowId = button.dataset.window;
                 }
                 
-                // If we found a window ID, mark it to prevent double sounds
+                // If we found a window ID, play sound for that specific window
                 if (windowId) {
                     const targetWindow = document.getElementById(windowId);
                     if (targetWindow) {
-                        targetWindow.dataset.soundPlayed = 'true';
+                        // Clear initial window flag for the target window
+                        if (targetWindow.dataset.initialWindow === 'true') {
+                            targetWindow.dataset.initialWindow = '';
+                        }
+                        
+                        playSoundForWindow(targetWindow, 'notify', 0.6, 1000);
+                    } else {
+                        soundManager.play('notify', 0.6);
                     }
+                } else {
+                    soundManager.play('notify', 0.6);
                 }
-                
-                // Also mark all windows to be safe
-                document.querySelectorAll('.window').forEach(win => {
-                    if (!win.classList.contains('minimized')) {
-                        win.dataset.soundPlayed = 'true';
-                    }
-                });
                 
                 setTimeout(() => { 
                     recentWindowControlAction = false;
-                    // Reset all windows' sound markers after a delay
-                    setTimeout(() => {
-                        document.querySelectorAll('.window').forEach(win => {
-                            win.dataset.soundPlayed = '';
-                        });
-        }, 500);
-                }, 1000);
+                }, 500);
             });
         }
     });
 
-    // Check the HTML structure of the page
-    console.log('=== Sound Debug ===');
-    console.log('WMP icon exists:', !!document.getElementById('wmp-icon'));
-    console.log('WMP icon has data-open-modal:', !!document.getElementById('wmp-icon')?.getAttribute('data-open-modal'));
-    console.log('=== End Sound Debug ===');
-    
-    // Create a MutationObserver to detect when windows become visible
-    // This ensures that any window that gets displayed will play the notify sound
+    // Create a MutationObserver to detect when windows become visible with improved window tracking
     try {
         const windowObserver = new MutationObserver((mutations) => {
             // Skip if a window control button was recently used or all sounds are prevented
@@ -419,6 +386,7 @@ function setupWindowsSounds() {
                     (mutation.attributeName === 'style' || mutation.attributeName === 'class')) {
                     
                     const element = mutation.target;
+                    const windowId = element.id;
                     
                     // Completely skip any changes if we're in a sound prevention period
                     if (window.preventAllSounds) {
@@ -426,13 +394,16 @@ function setupWindowsSounds() {
                         continue;
                     }
                     
-                    // Check for window closing - shouldn't play sounds
-                    if (element.classList.contains('window') && 
-                        (element.style.display === 'none' || 
-                         element.classList.contains('minimized'))) {
-                        // Reset sound marker when window is hidden
-                        element.dataset.soundPlayed = '';
-                        continue;  // Skip to next mutation
+                    // Skip if this is the window that last played a sound
+                    if (windowId === lastSoundWindow) {
+                        console.log('Skipping mutation for window that just played a sound:', windowId);
+                        continue;
+                    }
+                    
+                    // Skip if this window already has an active sound
+                    if (windowId && soundManager.isWindowActive(windowId)) {
+                        console.log('Skipping mutation for window with active sound:', windowId);
+                        continue;
                     }
                     
                     // Check if this is a window element becoming visible
@@ -440,12 +411,6 @@ function setupWindowsSounds() {
                         !element.classList.contains('minimized') && 
                         element.style.display !== 'none' && 
                         !element.dataset.soundPlayed) {
-                        
-                        // One more check to ensure we're not in the middle of a close operation
-                        if (window.preventAllSounds) {
-                            console.log('Skipping notify sound due to preventAllSounds flag');
-                            continue;
-                        }
                         
                         // Special handling for windows that were initially visible
                         if (element.dataset.initialWindow === 'true') {
@@ -462,20 +427,9 @@ function setupWindowsSounds() {
                                 }
                             }, 800);
                         } else {
-                            // For normal window visibility changes
-                            // Mark this window as having played the sound
-                            element.dataset.soundPlayed = 'true';
-                            
-                            // Play the notify sound
+                            // For normal window visibility changes, play the notify sound
                             console.log('Window became visible, playing notify sound for:', element.id);
-                            soundManager.play('notify', 0.6);
-                            
-                            // Reset the marker after a short delay
-                            setTimeout(() => {
-                                if (element) {
-                                    element.dataset.soundPlayed = '';
-                                }
-                            }, 800);
+                            playSoundForWindow(element, 'notify', 0.6, 800);
                         }
                     }
                 }
@@ -490,12 +444,12 @@ function setupWindowsSounds() {
             });
         });
         
-        console.log('Window visibility observer initialized');
+        console.log('Window visibility observer initialized with improved tracking');
     } catch (error) {
         console.error('Failed to initialize window observer:', error);
     }
     
-    console.log('Windows XP sounds initialized with essential sounds only');
+    console.log('Windows XP sounds initialized with consistent window tracking');
 }
 
 // Setup sounds after DOM is fully loaded

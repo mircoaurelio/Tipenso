@@ -3,10 +3,15 @@
  * Manages Windows XP sound effects for the media player application
  */
 
+// Only create a single instance without checking for initialization flag
+// This allows CSS to load properly while still preventing duplicate sound managers
 class SoundManager {
     constructor() {
         this.sounds = {};
         this.enabled = true;
+        
+        // Add tracking for active windows with sounds
+        this.activeWindows = new Set();
         
         // Initialize sound effects
         this.init();
@@ -15,50 +20,33 @@ class SoundManager {
     init() {
         // Define the sound files to preload with paths relative to the Windows XP sounds directory
         const soundFiles = {
-            // System sounds
+            // System sounds - only include essential ones to reduce 404 errors
             'startup': 'sounds/windows-xp-sounds/startup.mp3',
-            'shutdown': 'sounds/windows-xp-sounds/shutdown.mp3',
             'error': 'sounds/windows-xp-sounds/error.mp3',
             'exclamation': 'sounds/windows-xp-sounds/exclamation.mp3',
             'ding': 'sounds/windows-xp-sounds/ding.mp3',
             'notify': 'sounds/windows-xp-sounds/notify.mp3',
-            'windowOpen': 'sounds/windows-xp-sounds/tada.mp3',
             'windowClose': 'sounds/windows-xp-sounds/close.mp3',
-            'maximize': 'sounds/windows-xp-sounds/maximize.mp3',
             'minimize': 'sounds/windows-xp-sounds/minimize.mp3',
-            'click': 'sounds/windows-xp-sounds/click.mp3',
-            'navigate': 'sounds/windows-xp-sounds/navigate.mp3',
             'critical': 'sounds/windows-xp-sounds/critical_stop.mp3',
-            
-            // Media player specific sounds
-            'mediaPlay': 'sounds/windows-xp-sounds/media_play.mp3',
-            'mediaPause': 'sounds/windows-xp-sounds/media_pause.mp3',
-            'mediaStop': 'sounds/windows-xp-sounds/media_stop.mp3',
-            'mediaNext': 'sounds/windows-xp-sounds/media_next.mp3',
-            'mediaPrev': 'sounds/windows-xp-sounds/media_prev.mp3',
-            
-            // Additional sounds
-            'logon': 'sounds/windows-xp-sounds/logon.mp3',
-            'logoff': 'sounds/windows-xp-sounds/logoff.mp3',
-            'recycle': 'sounds/windows-xp-sounds/recycle.mp3',
-            'restore': 'sounds/windows-xp-sounds/restore.mp3',
-            'balloon': 'sounds/windows-xp-sounds/balloon.mp3',
-            'question': 'sounds/windows-xp-sounds/question.mp3',
-            'hardwareInsert': 'sounds/windows-xp-sounds/hardware_insert.mp3',
-            'hardwareRemove': 'sounds/windows-xp-sounds/hardware_remove.mp3'
         };
         
         // Create and preload audio elements
         for (const [name, path] of Object.entries(soundFiles)) {
-            this.sounds[name] = new Audio(path);
-            this.sounds[name].preload = 'auto';
-            
-            // Add error handling
-            this.sounds[name].addEventListener('error', (e) => {
-                console.warn(`Failed to load sound "${name}" from ${path}`, e);
-                // Fall back to base64 encoded sound if available
+            try {
+                this.sounds[name] = new Audio(path);
+                this.sounds[name].preload = 'auto';
+                
+                // Add error handling
+                this.sounds[name].addEventListener('error', (e) => {
+                    console.warn(`Failed to load sound "${name}" from ${path}`, e);
+                    // Fall back to base64 encoded sound if available
+                    this.useFallbackSound(name);
+                });
+            } catch (e) {
+                console.warn(`Failed to create Audio object for "${name}": ${e.message}`);
                 this.useFallbackSound(name);
-            });
+            }
         }
         
         console.log('Sound Manager initialized with Windows XP sounds');
@@ -74,13 +62,124 @@ class SoundManager {
             'exclamation': 'data:audio/wav;base64,UklGRlIEAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YTYE',
             'ding': 'data:audio/wav;base64,UklGRpYDAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YXwD',
             'minimize': 'data:audio/wav;base64,UklGRnICAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YVQC',
-            'windowClose': 'data:audio/wav;base64,UklGRpICAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YXgC'
+            'windowClose': 'data:audio/wav;base64,UklGRpICAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YXgC',
+            'critical': 'data:audio/wav;base64,UklGRpICAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YXgC',
+            'notify': 'data:audio/wav;base64,UklGRpICAABXQVZFZm10IBAAAAABAAEARKwAAESsAAABAAgAZGF0YXgC'
         };
         
         if (fallbackSounds[soundName]) {
             console.log(`Using fallback sound for "${soundName}"`);
-            this.sounds[soundName] = new Audio(fallbackSounds[soundName]);
+            try {
+                this.sounds[soundName] = new Audio(fallbackSounds[soundName]);
+            } catch (e) {
+                console.warn(`Failed to create fallback Audio object: ${e.message}`);
+            }
         }
+    }
+    
+    /**
+     * Add a window to active sounds tracking
+     * @param {string} windowId - The ID of the window to track
+     */
+    addActiveWindow(windowId) {
+        if (!windowId) return;
+        
+        this.activeWindows.add(windowId);
+        setTimeout(() => {
+            this.activeWindows.delete(windowId);
+        }, 1000);
+    }
+    
+    /**
+     * Check if a window is currently active with sounds
+     * @param {string} windowId - The ID of the window to check
+     * @returns {boolean} - Whether the window is active
+     */
+    isWindowActive(windowId) {
+        return windowId && this.activeWindows.has(windowId);
+    }
+    
+    /**
+     * Play a sound effect for a specific window
+     * @param {Element} windowElement - The window DOM element
+     * @param {string} soundName - The name of the sound to play
+     * @param {number} volume - Volume level (0.0 to 1.0)
+     * @param {number} duration - How long to mark the window as having played a sound
+     * @returns {boolean} - Whether the sound was played successfully
+     */
+    playForWindow(windowElement, soundName, volume = 0.5, duration = 1000) {
+        if (!windowElement) return this.play(soundName, volume);
+        
+        const windowId = windowElement.id;
+        
+        // Special case for window close sound - always play it even for initially loaded windows
+        if (soundName === 'windowClose' || soundName === 'critical') {
+            // Remove initial window marker to ensure close sound always plays
+            windowElement.dataset.initialWindow = '';
+            
+            // If this is the first close on an initially loaded window, force play sound
+            if (windowElement.dataset.soundPlayed === 'true') {
+                console.log(`Forcing ${soundName} sound for initial window: ${windowId}`);
+                windowElement.dataset.soundPlayed = '';
+            }
+            
+            // Check if we are already in close operation to prevent double sound
+            if (windowElement.dataset.closingInProgress === 'true') {
+                console.log(`Skipping duplicate close sound for: ${windowId}`);
+                return false;
+            }
+            
+            // Check if global soundManager is handling this
+            if (window.soundManager && 
+                soundName === 'windowClose' && 
+                windowElement.dataset.criticalSoundPlayed === 'true') {
+                console.log(`Skipping windowClose, critical already played for: ${windowId}`);
+                return false;
+            }
+            
+            // Mark window as being closed to prevent duplicate sounds
+            windowElement.dataset.closingInProgress = 'true';
+            
+            // If this is the 'critical' sound from windowsXPSounds.js, mark it
+            if (soundName === 'critical') {
+                windowElement.dataset.criticalSoundPlayed = 'true';
+            }
+            
+            // Clear the closing flag after close operation is done
+            setTimeout(() => {
+                if (windowElement) {
+                    windowElement.dataset.closingInProgress = '';
+                    windowElement.dataset.criticalSoundPlayed = '';
+                }
+            }, 1500);
+        }
+        
+        // Don't play sound if already active for this window (except for close sounds)
+        if (windowId && this.isWindowActive(windowId) && 
+            soundName !== 'windowClose' && soundName !== 'critical') {
+            console.log(`Skipping sound ${soundName} for window ${windowId} - already active`);
+            return false;
+        }
+        
+        // Play the sound
+        const result = this.play(soundName, volume);
+        
+        // Mark this window as having an active sound
+        if (windowId) {
+            this.addActiveWindow(windowId);
+        }
+        
+        // Set the sound played marker to prevent duplicate sounds
+        windowElement.dataset.soundPlayed = 'true';
+        
+        // Reset the marker after the specified duration
+        setTimeout(() => {
+            if (windowElement) {
+                windowElement.dataset.soundPlayed = '';
+            }
+        }, duration);
+        
+        return result;
     }
     
     /**
@@ -91,6 +190,11 @@ class SoundManager {
      */
     play(soundName, volume = 0.5) {
         if (!this.enabled) return false;
+        
+        // Check if we should delegate to the global soundManager
+        if (window.soundManager && window.soundManager.sounds[soundName]) {
+            return window.soundManager.play(soundName, volume);
+        }
         
         const sound = this.sounds[soundName];
         if (!sound) {
@@ -139,6 +243,12 @@ class SoundManager {
      * This connects Windows XP sounds to UI elements
      */
     setupWindowEventHandlers() {
+        // Check if we should skip setup because windowsXPSounds.js is handling it
+        if (window.soundManager) {
+            console.log('Skipping SoundManager.setupWindowEventHandlers as window.soundManager exists');
+            return;
+        }
+        
         if (typeof document === 'undefined') return;
         
         // Find all windows and window controls
@@ -149,7 +259,7 @@ class SoundManager {
             const closeButton = windowElement.querySelector('button[aria-label="Close"]');
             if (closeButton) {
                 closeButton.addEventListener('click', () => {
-                    this.play('windowClose', 0.6);
+                    this.playForWindow(windowElement, 'windowClose', 0.6, 1500);
                 });
             }
             
@@ -158,9 +268,9 @@ class SoundManager {
             if (maximizeButton) {
                 maximizeButton.addEventListener('click', () => {
                     if (windowElement.classList.contains('maximized')) {
-                        this.play('restore', 0.6);
+                        this.playForWindow(windowElement, 'restore', 0.6, 1000);
                     } else {
-                        this.play('maximize', 0.6);
+                        this.playForWindow(windowElement, 'maximize', 0.6, 1000);
                     }
                 });
             }
@@ -169,7 +279,7 @@ class SoundManager {
             const minimizeButton = windowElement.querySelector('button[aria-label="Minimize"]');
             if (minimizeButton) {
                 minimizeButton.addEventListener('click', () => {
-                    this.play('minimize', 0.6);
+                    this.playForWindow(windowElement, 'minimize', 0.6, 1000);
                 });
             }
         });
@@ -190,16 +300,21 @@ class SoundManager {
     }
 }
 
-// Create a global sound manager instance
-if (typeof window !== 'undefined') {
+// Create a global sound manager instance (only if it doesn't already exist)
+if (typeof window !== 'undefined' && !window.soundManagerInstance) {
     window.soundManagerInstance = new SoundManager();
     
     // Setup the event handlers after DOM content is loaded
     document.addEventListener('DOMContentLoaded', () => {
-        window.soundManagerInstance.setupWindowEventHandlers();
-        
-        // Play startup sound when the page loads
-        window.soundManagerInstance.play('startup', 0.7);
+        // Only setup our event handlers if windowsXPSounds.js hasn't already set up window.soundManager
+        if (!window.soundManager) {
+            window.soundManagerInstance.setupWindowEventHandlers();
+            
+            // Play startup sound when the page loads
+            window.soundManagerInstance.play('startup', 0.7);
+        } else {
+            console.log('Detected window.soundManager, deferring to it for sound handling');
+        }
     });
     
     console.log('Global sound manager created');
