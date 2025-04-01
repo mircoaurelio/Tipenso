@@ -247,6 +247,8 @@ if (typeof window.soundManagerInitialized === 'undefined') {
          * This connects Windows XP sounds to UI elements
          */
         setupWindowEventHandlers() {
+            // IMPORTANT: This function should ONLY handle sounds, not button styling or behavior
+            
             // Check if we should skip setup because windowsXPSounds.js is handling it
             if (window.soundManager) {
                 console.log('Skipping SoundManager.setupWindowEventHandlers as window.soundManager exists');
@@ -258,10 +260,14 @@ if (typeof window.soundManagerInitialized === 'undefined') {
             // Find all windows and window controls
             const windows = document.querySelectorAll('.window');
             
+            // Track which buttons we've already processed
+            const processedButtons = new Set();
+            
             windows.forEach(windowElement => {
                 // Window close button - use our specific "closing window" sound
                 const closeButton = windowElement.querySelector('button[aria-label="Close"]');
-                if (closeButton) {
+                if (closeButton && !processedButtons.has(closeButton)) {
+                    processedButtons.add(closeButton);
                     closeButton.addEventListener('click', () => {
                         this.playForWindow(windowElement, 'windowClose', 0.6, 1500);
                     });
@@ -269,7 +275,8 @@ if (typeof window.soundManagerInitialized === 'undefined') {
                 
                 // Window maximize button
                 const maximizeButton = windowElement.querySelector('button[aria-label="Maximize"]');
-                if (maximizeButton) {
+                if (maximizeButton && !processedButtons.has(maximizeButton)) {
+                    processedButtons.add(maximizeButton);
                     maximizeButton.addEventListener('click', () => {
                         if (windowElement.classList.contains('maximized')) {
                             this.playForWindow(windowElement, 'restore', 0.6, 1000);
@@ -281,7 +288,8 @@ if (typeof window.soundManagerInitialized === 'undefined') {
                 
                 // Window minimize button - use our specific "minimize" sound
                 const minimizeButton = windowElement.querySelector('button[aria-label="Minimize"]');
-                if (minimizeButton) {
+                if (minimizeButton && !processedButtons.has(minimizeButton)) {
+                    processedButtons.add(minimizeButton);
                     minimizeButton.addEventListener('click', () => {
                         this.playForWindow(windowElement, 'minimize', 0.6, 1000);
                     });
@@ -300,7 +308,7 @@ if (typeof window.soundManagerInitialized === 'undefined') {
                 return oldAlert.call(window, message);
             };
             
-            console.log('Windows XP sound event handlers initialized');
+            console.log('Windows XP sound event handlers initialized (SOUNDS ONLY, NO STYLING)');
         }
     }
 
