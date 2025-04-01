@@ -504,6 +504,10 @@
                 width: 100%; /* Ensure full width */
                 left: 0;
                 right: 0;
+                display: flex; /* Ensure proper layout */
+                justify-content: space-between; /* Distribute space evenly */
+                align-items: center; /* Center items vertically */
+                overflow-x: visible; /* Ensure icons aren't cut off */
             }
             
             .start-button {
@@ -511,7 +515,7 @@
                 min-width: 70px; /* Smaller width */
                 padding: 1px 5px;
                 font-size: 14px;
-            
+                flex-shrink: 0; /* Prevent shrinking */
             }
             
             .start-button img {
@@ -526,12 +530,15 @@
                 height: 40px;
                 margin-left: 3px;
                 padding-left: 3px;
+                flex-shrink: 0; /* Prevent shrinking */
+                display: flex; /* Ensure flex display */
             }
             
             .quick-launch-icon {
                 width: 30px; /* Smaller */
                 height: 30px;
                 padding: 3px;
+                flex-shrink: 0; /* Prevent shrinking */
             }
             
             .quick-launch-icon img {
@@ -544,6 +551,7 @@
                 min-width: 100px; /* Reduced width */
                 font-size: 11px; /* Smaller text */
                 padding: 1px 6px;
+                flex-shrink: 0; /* Prevent shrinking */
             }
             
             .program-button img {
@@ -556,7 +564,12 @@
             .active-programs {
                 height: 38px;
                 margin-top: 2px;
-                display: none;
+                display: flex; /* Always display on mobile */
+                flex-wrap: nowrap; /* Prevent wrapping */
+                overflow-x: auto; /* Allow scrolling if needed */
+                -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+                flex: 1; /* Take available space */
+                justify-content: flex-start; /* Align to start */
             }
             
             .taskbar-time {
@@ -565,6 +578,7 @@
                 padding: 2px 6px;
                 margin-right: 4px;
                 min-width: 50px;
+                flex-shrink: 0; /* Prevent shrinking */
             }
             
             .date-display {
@@ -602,6 +616,26 @@
                 min-width: 30px;
                 min-height: 30px;
                 margin-left: 4px;
+                background-color: transparent; /* Ensure the background is transparent */
+                background-repeat: no-repeat; /* Don't repeat the background image */
+                background-position: center; /* Center the background image */
+                background-size: 16px 16px; /* Set proper size for the background image */
+                border: none; /* Remove border that might interfere */
+                position: relative; /* Ensure proper positioning */
+                display: inline-block; /* Proper display */
+            }
+            
+            /* Fix specific button backgrounds */
+            .title-bar-controls button[aria-label="Minimize"] {
+                background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="5" width="8" height="2" fill="black"/></svg>');
+            }
+            
+            .title-bar-controls button[aria-label="Maximize"] {
+                background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="2" width="8" height="8" stroke="black" stroke-width="2" fill="none"/></svg>');
+            }
+            
+            .title-bar-controls button[aria-label="Close"] {
+                background-image: url('data:image/svg+xml;charset=UTF-8,<svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2 2L10 10M2 10L10 2" stroke="black" stroke-width="2"/></svg>');
             }
             
             /* Make the XP notification bigger on mobile */
@@ -1808,541 +1842,6 @@
             @media (max-width: 768px) {
                 .window.maximized .modal-visualizer-container {
                     height: calc(100vh - 250px) !important;
-                    min-height: 300px !important;
-                    transition: height 0.3s ease;
-                    visibility: visible !important;
-                    display: block !important;
-                    border: 1px solid rgba(255, 255, 255, 0.4) !important;
-                    background-color: rgba(0, 0, 0, 0.7) !important;
-                    box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                }
-                
-                /* Enhanced Windows title bar for maximized state on mobile */
-                .window.maximized .title-bar {
-                    background: linear-gradient(180deg, rgba(40, 110, 220, 0.9) 0%, rgba(36, 100, 210, 0.9) 50%, rgba(30, 90, 200, 0.9) 100%) !important;
-                    backdrop-filter: blur(10px) !important;
-                    -webkit-backdrop-filter: blur(10px) !important;
-                    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2) !important;
-                    padding: 8px 10px !important; /* Slightly larger padding for mobile */
-                    border-bottom: 1px solid rgba(255, 255, 255, 0.3) !important;
-                }
-                
-                .window.maximized {
-                    width: 100% !important;
-                    max-width: 100% !important;
-                    width: 100vw !important;
-                    height: calc(100vh - 40px) !important; /* Mobile has 70px taskbar */
-                    top: 0 !important;
-                    left: 0 !important;
-                    right: 0 !important;
-                    margin: 0 !important;
-                    position: fixed !important;
-                    transition: all 0.3s ease;
-                    transform: none !important;
-                    border-radius: 0 !important;
-                    overflow: hidden !important;
-                    box-sizing: border-box !important;
-                    padding: 0 !important;
-                    bottom: 70px !important; /* Also update bottom */
-                    
-                    /* Enhanced Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.7) !important;
-                    backdrop-filter: blur(15px) saturate(125%) !important;
-                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
-                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-                }
-                
-                #wmp-window.maximized {
-                    height: calc(100vh - 40px) !important; /* Taskbar is 40px */
-                    bottom: 40px !important;
-                    
-                    /* Windows glass effect for mobile */
-                    background-color: rgba(236, 233, 216, 0.7) !important;
-                    backdrop-filter: blur(15px) saturate(125%) !important;
-                    -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
-                    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                    border: 1px solid rgba(255, 255, 255, 0.6) !important;
-                }
-            }
-        }
-        
-        /* Handle screen orientation changes */
-        @media (orientation: landscape) and (max-height: 500px) {
-            .taskbar {
-                height: 38px; /* Even smaller in landscape */
-            }
-            
-            .window {
-                max-height: calc(100vh - 50px);
-            }
-            
-            /* Adjust icons for landscape */
-            .start-button {
-                height: 32px;
-                min-width: 65px;
-                font-size: 12px;
-            }
-            
-            .start-button img {
-                height: 18px;
-                width: 18px;
-            }
-            
-            .quick-launch-icon {
-                width: 32px; /* Increased from 24px */
-                height: 32px; /* Increased from 24px */
-            }
-            
-            .quick-launch-icon img {
-                width: 24px; /* Increased from 14px to match desktop */
-                height: 24px; /* Increased from 14px to match desktop */
-                object-fit: contain;
-            }
-            
-            .quick-launch {
-                height: 30px;
-            }
-            
-            .active-programs {
-                height: 30px;
-            }
-            
-            .program-button {
-                height: 28px;
-                min-width: 90px;
-                font-size: 10px;
-            }
-            
-            .taskbar-time {
-                height: 26px;
-                padding: 1px 5px;
-            }
-        }
-
-        /* Base styles */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #121212;
-            color: #e0e0e0;
-            overflow-x: hidden;
-        }
-
-        /* Make sure buttons are always clickable */
-        button {
-            cursor: pointer;
-            position: relative;
-            z-index: 50;
-        }
-        
-        /* Ensure the spotify-click-detector doesn't block button interaction */
-        #spotify-click-detector {
-            z-index: 1;
-            position: absolute;
-            pointer-events: none;
-        }
-        
-        /* Existing styles continue below */
-        .player-container {
-            background-color: rgb(70, 86, 78);
-            height: 152px; /* Exact height to prevent resizing */
-            width: 100%;
-            position: relative; /* Restore position */
-            z-index: 10; /* Restore z-index */
-            
-            overflow: hidden;
-            box-sizing: border-box;
-        }
-        
-        /* Ensure the controls always have a higher z-index than other elements */
-        .controls {
-            position: relative;
-            z-index: 100;
-        }
-
-        /* Windows XP Loading Screen Styles */
-        .windows-loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: #0a246a; /* Classic Windows XP blue */
-            z-index: 100000000000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 1;
-            transition: opacity 0.5s ease-out;
-        }
-        
-        .windows-loading-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        
-        .loading-content {
-            text-align: center;
-            color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        .loading-text {
-            font-size: 24px;
-            margin-bottom: 20px;
-            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
-        }
-        
-        .loading-description {
-            margin-top: 15px;
-            font-size: 14px;
-            opacity: 0.8;
-        }
-        
-        /* Windows XP logo animation */
-        .windows-logo {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 1fr 1fr;
-            gap: 8px;
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px auto;
-        }
-        
-        .windows-flag {
-            border-radius: 5px;
-            filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.3));
-            animation: flag-wave 3s infinite;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .windows-flag img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            position: absolute;
-            top: 0;
-            left: 0;
-        }
-        
-        .windows-flag::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            mix-blend-mode: multiply;
-            opacity: 0.7;
-        }
-        
-        .windows-flag.red::after {
-            background-color: #f65314;
-        }
-        
-        .windows-flag.red {
-            animation-delay: 0s;
-        }
-        
-        .windows-flag.green::after {
-            background-color: #7cbb00;
-        }
-        
-        .windows-flag.green {
-            animation-delay: 0.25s;
-        }
-        
-        .windows-flag.blue::after {
-            background-color: #00a1f1;
-        }
-        
-        .windows-flag.blue {
-            animation-delay: 0.5s;
-        }
-        
-        .windows-flag.yellow::after {
-            background-color: #ffbb00;
-        }
-        
-        .windows-flag.yellow {
-            animation-delay: 0.75s;
-        }
-        
-        @keyframes flag-wave {
-            0%, 100% {
-                transform: scale(1);
-                opacity: 1;
-            }
-            50% {
-                transform: scale(0.9);
-                opacity: 0.8;
-            }
-        }
-        
-        /* Mobile optimizations for loading screen */
-        @media (max-width: 768px) {
-            /* Removed loading bar container mobile styles */
-            
-            .loading-text {
-                font-size: 20px;
-            }
-            
-            .windows-logo {
-                width: 100px;
-                height: 100px;
-            }
-        }
-        
-        /* Share button style */
-        .share-button {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 25;
-            background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
-            border: 1px solid #7BA7E1;
-            border-radius: 3px;
-            width: auto;
-            height: auto;
-            padding: 8px 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            transition: all 0.2s ease;
-            font-family: 'Tahoma', sans-serif;
-        }
-        
-        .share-button:hover {
-            background: linear-gradient(to bottom, #F3FAFF 0%, #E2F0FC 50%, #D6EDFF 51%, #C1E3FF 100%);
-            border-color: #8CB8F3;
-            transform: scale(1.02);
-            box-shadow: 0 3px 7px rgba(0,0,0,0.3);
-        }
-        
-        .share-button:active {
-            background: linear-gradient(to bottom, #C1E3FF 0%, #D6EDFF 50%, #E2F0FC 51%, #F3FAFF 100%);
-            transform: scale(0.98);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
-        
-        @media (max-width: 768px) {
-            /* Mobile-specific styles */
-            /* ... existing code ... */
-            
-            /* Make share button visible on mobile and style it properly */
-            .share-button {
-                bottom: 12px;
-                right: 12px;
-                display: flex;
-                background: linear-gradient(to bottom, #EDF6FF 0%, #D0E6F9 50%, #C4E0FC 51%, #ABD4FC 100%);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-                border-radius: 3px;
-                width: auto;
-                padding: 8px 12px;
-                border: 1px solid #7BA7E1;
-                font-family: "Tahoma", sans-serif;
-            }
-            
-            .share-button span {
-                font-size: 14px;
-                font-weight: bold;
-                color: #000;
-                text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-            }
-            
-            .share-button svg {
-                width: 16px;
-                height: 16px;
-                color: #0046D5;
-            }
-            
-            /* Enhanced controls for mobile */
-            .controls {
-                display: none !important;
-                padding: 10px 5px;
-                margin-top: 10px;
-                justify-content: space-around;
-            }
-            
-            .controls button {
-                padding: 10px 15px;
-                font-size: 14px;
-                min-height: 44px;
-                min-width: 80px;
-                margin: 0 3px;
-                box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-            }
-            
-            .controls button:active {
-                background: linear-gradient(to bottom, #C1E3FF 0%, #D6EDFF 50%, #E2F0FC 51%, #F3FAFF 100%);
-                transform: scale(0.97);
-            }
-            
-            /* Ensure maximize/expand works properly on mobile */
-            .window.maximized {
-                width: 100% !important;
-                max-width: 100% !important;
-                width: 100vw !important;
-                height: calc(100vh - 40px) !important; /* Mobile has 70px taskbar */
-                top: 0 !important;
-                left: 0 !important;
-                right: 0 !important;
-                margin: 0 !important;
-                position: fixed !important;
-                transition: all 0.3s ease;
-                transform: none !important;
-                border-radius: 0 !important;
-                overflow: hidden !important;
-                box-sizing: border-box !important;
-                padding: 0 !important;
-                bottom: 40px !important; /* Also update bottom */
-                
-                /* Windows glass effect for mobile */
-                background-color: rgba(236, 233, 216, 0.7) !important;
-                backdrop-filter: blur(15px) saturate(125%) !important;
-                -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                border: 1px solid rgba(255, 255, 255, 0.6) !important;
-            }
-            
-            #wmp-window.maximized {
-                height: calc(100vh - 40px) !important; /* Taskbar is 40px */
-                bottom: 40px !important;
-                
-                /* Windows glass effect for mobile */
-                background-color: rgba(236, 233, 216, 0.7) !important;
-                backdrop-filter: blur(15px) saturate(125%) !important;
-                -webkit-backdrop-filter: blur(15px) saturate(125%) !important;
-                box-shadow: 0 0 20px rgba(0, 0, 0, 0.3) !important;
-                border: 1px solid rgba(255, 255, 255, 0.6) !important;
-            }
-            
-            .ie-link {
-                padding: 8px 5px;
-            }
-            
-            /* Hide toggle and kaleidoscope buttons on mobile */
-            .btn-toggle-play, 
-            .btn-kaleidoscope, 
-            .btn-debug {
-                display: none !important;
-            }
-            
-            /* Simplified controls for mobile */
-            .controls {
-                margin-top: 10px;
-                display: none;
-                justify-content: space-around;
-                align-items: center;
-                width: 100%;
-            }
-            
-            .controls button {
-                margin: 0 5px;
-                height: 40px;  /* Bigger touch target */
-                min-width: 80px;
-                font-size: 14px;
-                padding: 8px 12px;
-                border: 2px solid rgba(255,255,255,0.2);
-                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                border-radius: 6px;
-                z-index: 100;  /* Ensure buttons are above other elements */
-                position: relative;
-                touch-action: manipulation;  /* Improve touch handling */
-                -webkit-tap-highlight-color: rgba(0,0,0,0);  /* Remove default mobile tap highlight */
-            }
-            
-            /* Visual feedback for active state */
-            .controls button:active {
-                background-color: rgba(255,255,255,0.3) !important;
-                transform: scale(0.97);
-            }
-            
-            #spotify-click-detector {
-                pointer-events: none; /* Ensure this doesn't block clicks */
-            }
-            
-            .player-container {
-                background-color: rgb(70, 86, 78);
-                height: 152px; /* Exact height to prevent resizing */
-                width: 100%;
-            overflow: hidden;
-                box-sizing: border-box;
-            }
-            
-            #spotify-player {
-                display: block;
-                visibility: visible;
-                position: relative;
-                z-index: 20;
-                overflow: hidden;
-                background-color: white;
-                height: 152px;
-                width: 100%;
-            }
-            
-            #spotify-embed-iframe, 
-            #spotify-embed-iframe iframe {
-                display: block;
-                visibility: visible;
-                position: relative;
-                z-index: 20;
-                background-color: white;
-                height: 152px;
-                width: 100%;
-            }
-            
-            /* Debugging - Mark buttons to see if they're visibly rendered correctly */
-            .controls:after {
-                content: "";
-                display: block;
-                clear: both;
-            }
-            
-            /* Modal visualizer container for mobile */
-            .modal-visualizer-container {
-                height: 352px;
-                min-height: 250px;
-                z-index: 5;
-            }
-            
-            /* Ensure WMP window has proper z-index */
-            #wmp-window {
-                z-index: 1000;
-                position: relative;
-            }
-            
-            /* Fix for any potential issues with bubbling */
-            html, body {
-                touch-action: manipulation;
-                -webkit-overflow-scrolling: touch;
-            }
-            
-            /* Make share button more visible on mobile */
-            .share-button {
-                width: 44px;
-                height: 44px;
-                bottom: 12px;
-                right: 12px;
-                background-color: rgba(255, 255, 255, 0.95);
-                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
-            }
-            
-            .share-button svg {
-                width: 20px;
-                height: 20px;
-            }
-            
-            /* Expanded view for mobile */
-            @media (max-width: 768px) {
-                .window.maximized .modal-visualizer-container {
-                    height: calc(100vh - 380px) !important;
                     min-height: 300px !important;
                     transition: height 0.3s ease;
                     visibility: visible !important;
